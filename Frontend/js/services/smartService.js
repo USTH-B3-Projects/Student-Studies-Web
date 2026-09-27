@@ -97,7 +97,7 @@ export function enrich(task) {
   const importanceScore = calculateImportanceScore(task.importance);
   const remainingWorkload = calculateRemainingWorkload(task.estimatedDuration, task.currentProgress);
   const workloadScore = calculateWorkloadScore(remainingWorkload);
-  const completionStatus = Number(task.currentProgress) === 100 ? "completed" : "pending";
+  const completionStatus = Boolean(Number(task.completed)) ? "completed" : "pending";
   const isOverdue = completionStatus !== "completed" && new Date(task.deadline) < new Date();
   const hasWorkloadWarning =
     completionStatus !== "completed" &&
@@ -125,7 +125,7 @@ export function enrich(task) {
 }
 
 export function rankTasks(tasks) {
-  const pendingTasks = tasks.map(enrich).filter((task) => task.currentProgress < 100);
+  const pendingTasks = tasks.map(enrich).filter((task) => task.completionStatus !== "completed");
 
   return pendingTasks.sort((taskA, taskB) => {
     const priorityA = calculatePriorityScore(taskA);
@@ -181,7 +181,7 @@ export async function getLocalRecommendations(courseId) {
 
 /**
  * Conditions for a task to trigger an alert:
- *   - Incomplete (currentProgress < 100)
+ *   - Not marked completed
  *   - Not overdue (deadline has not yet passed)
  *   - The user has entered an estimatedDuration (non-null)
  *   - (urgencyScore >= 80 AND workloadScore >= 60) OR (urgencyScore >= 60 AND workloadScore >= 80)

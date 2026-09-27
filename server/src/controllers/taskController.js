@@ -52,7 +52,7 @@ function enrichTask(task) {
   const now = new Date();
   const deadlineDate = new Date(task.deadline);
   let status = 'pending';
-  if (task.currentProgress === 100) {
+  if (task.completed) {
     status = 'completed';
   } else if (deadlineDate < now) {
     status = 'overdue';
@@ -80,7 +80,7 @@ function enrichTask(task) {
 }
 
 exports.create = (req, res) => {
-  const { courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress } = req.body;
+  const { courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress, completed } = req.body;
 
   if (!courseId || !taskName || !deadline) {
     return res.status(400).json({ error: 'courseId, taskName, and deadline are required' });
@@ -100,6 +100,9 @@ exports.create = (req, res) => {
   if (currentProgress !== undefined && !isValidProgress(currentProgress)) {
     return res.status(400).json({ error: 'currentProgress must be: 0, 25, 50, 75, 100' });
   }
+  if (completed !== undefined && typeof completed !== 'boolean') {
+    return res.status(400).json({ error: 'completed must be a boolean' });
+  }
 
   try {
     const course = db.prepare('SELECT * FROM courses WHERE courseId = ?').get(courseId);
@@ -111,8 +114,8 @@ exports.create = (req, res) => {
     const createdAt = new Date().toISOString();
 
     db.prepare(`
-      INSERT INTO tasks (id, courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (id, courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress, completed, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       taskId,
       courseId,
@@ -122,6 +125,7 @@ exports.create = (req, res) => {
       importance || 'medium',
       estimatedDuration || null,
       currentProgress || 0,
+      completed ? 1 : 0,
       createdAt
     );
 
@@ -134,6 +138,7 @@ exports.create = (req, res) => {
       importance: importance || 'medium',
       estimatedDuration: estimatedDuration || null,
       currentProgress: currentProgress || 0,
+      completed: Boolean(completed),
       createdAt
     };
 
@@ -157,6 +162,7 @@ exports.getAll = (req, res) => {
         t.importance,
         t.estimatedDuration,
         t.currentProgress,
+        t.completed,
         t.createdAt
       FROM tasks t
       JOIN courses c ON c.courseId = t.courseId
@@ -189,6 +195,7 @@ exports.getById = (req, res) => {
         t.importance,
         t.estimatedDuration,
         t.currentProgress,
+        t.completed,
         t.createdAt
       FROM tasks t
       JOIN courses c ON c.courseId = t.courseId
@@ -207,7 +214,7 @@ exports.getById = (req, res) => {
 
 exports.update = (req, res) => {
   const { id } = req.params;
-  const { taskName, description, deadline, importance, estimatedDuration, currentProgress } = req.body;
+  const { taskName, description, deadline, importance, estimatedDuration, currentProgress, completed } = req.body;
 
   try {
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
@@ -230,10 +237,13 @@ exports.update = (req, res) => {
     if (currentProgress !== undefined && !isValidProgress(currentProgress)) {
       return res.status(400).json({ error: 'currentProgress must be: 0, 25, 50, 75, 100' });
     }
+    if (completed !== undefined && typeof completed !== 'boolean') {
+      return res.status(400).json({ error: 'completed must be a boolean' });
+    }
 
     db.prepare(`
       UPDATE tasks 
-      SET taskName = ?, description = ?, deadline = ?, importance = ?, estimatedDuration = ?, currentProgress = ?
+      SET taskName = ?, description = ?, deadline = ?, importance = ?, estimatedDuration = ?, currentProgress = ?, completed = ?
       WHERE id = ?
     `).run(
       taskName !== undefined ? taskName.trim() : task.taskName,
@@ -242,6 +252,7 @@ exports.update = (req, res) => {
       importance !== undefined ? importance : task.importance,
       estimatedDuration !== undefined ? estimatedDuration : task.estimatedDuration,
       currentProgress !== undefined ? currentProgress : task.currentProgress,
+      completed !== undefined ? Number(Boolean(completed)) : task.completed,
       id
     );
 
@@ -286,6 +297,7 @@ exports.smart = (req, res) => {
         t.importance,
         t.estimatedDuration,
         t.currentProgress,
+        t.completed,
         t.createdAt
       FROM tasks t
       JOIN courses c ON c.courseId = t.courseId

@@ -182,7 +182,6 @@ body[data-page="dashboard"] .stats-grid { grid-template-columns: repeat(4, minma
 .completed-stat .stat-icon { color: var(--success); background: var(--green-soft); }
 .overview-grid { grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr); }
 .overview-head > a { color: var(--primary); font-size: 12px; font-weight: 700; }
-.overview-caption { margin: 3px 0 4px 40px; }
 .attention-task { grid-template-columns: 34px minmax(0, 1fr) minmax(150px, 220px); padding: 10px 0; }
 .attention-alert { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; color: var(--danger); background: var(--red-soft); font-weight: 800; }
 .attention-copy { min-width: 0; display: grid; grid-template-columns: minmax(0, auto) 1fr; align-items: center; gap: 4px 8px; }
@@ -516,7 +515,6 @@ body[data-page="dashboard"] { overflow-x: clip; }
 .overview-head h2 { margin: 0; font-size: 20px; }
 .section-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: var(--primary); background: var(--blue-soft); font-weight: 800; }
 .warning-color { color: var(--warning); background: var(--amber-soft); }
-.overview-caption { color: var(--text-secondary); font-size: 11px; }
 .attention-list { display: grid; margin-top: 8px; }
 .attention-task {
   display: grid;
@@ -542,35 +540,34 @@ body[data-page="dashboard"] { overflow-x: clip; }
 .mini-empty img { width: 90px; height: 68px; object-fit: contain; }
 .mini-empty strong { color: var(--text-primary); }
 .progress-card { display: flex; flex-direction: column; gap: 9px; min-height: 0; padding: 18px 20px; }
-.summary-head, .summary-title { display: flex; align-items: center; gap: 10px; }
-.summary-head { justify-content: space-between; }
-.summary-title h2 { margin: 0; font-size: 20px; }
+.summary-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.summary-head h2 { margin: 0; font-size: 20px; }
 .summary-head time { flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--border); border-radius: 9px; color: var(--text-secondary); background: var(--bg-secondary); font-size: 10px; font-weight: 700; }
-.today-summary { display: grid; grid-template-columns: 106px minmax(0, 1fr); align-items: center; gap: 12px; }
+.today-summary { display: grid; grid-template-columns: 118px minmax(0, 1fr); align-items: center; gap: 14px; }
 .progress-ring {
-  width: 104px;
-  height: 104px;
+  width: 116px;
+  height: 116px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: conic-gradient(var(--primary) calc(var(--progress) * 1%), var(--bg-secondary) 0);
 }
-.progress-ring::before { content: ""; grid-area: 1 / 1; width: 78px; height: 78px; border-radius: 50%; background: var(--surface); }
+.progress-ring::before { content: ""; grid-area: 1 / 1; width: 88px; height: 88px; border-radius: 50%; background: var(--surface); }
 .progress-ring > span { z-index: 1; grid-area: 1 / 1; display: grid; text-align: center; }
-.progress-ring strong { font-size: 22px; line-height: 1; }
-.progress-ring small { margin-top: 4px; color: var(--text-secondary); font-size: 9px; font-weight: 600; }
-.summary-statuses { min-width: 0; display: grid; gap: 6px; }
-.summary-status { display: grid; grid-template-columns: 9px 22px minmax(0, 1fr); align-items: center; gap: 7px; padding: 6px 9px; border-radius: 10px; font-size: 11px; }
+.progress-ring strong { font-size: 19px; line-height: 1; }
+.progress-ring small { margin-top: 4px; color: var(--text-secondary); font-size: 9px; font-weight: 600; line-height: 1; }
+.progress-ring .progress-count { margin-top: 5px; font-size: 8px; font-weight: 500; }
+.summary-statuses { min-width: 0; display: grid; gap: 8px; }
+.summary-status { display: grid; grid-template-columns: 9px 22px minmax(0, 1fr); align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; font-size: 11px; }
 .summary-status i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .summary-status strong { color: var(--text-primary); font-size: 14px; }
 .summary-status span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .summary-status.attention { color: var(--danger); background: var(--red-soft); }
 .summary-status.active { color: var(--primary); background: var(--blue-soft); }
 .summary-status.done { color: var(--success); background: var(--green-soft); }
-.progress-message { display: flex; align-items: center; gap: 10px; margin-top: 0; padding: 7px 12px; border-radius: 13px; background: var(--blue-soft); font-size: 13px; }
-.progress-message img { width: 34px; height: 42px; object-fit: contain; }
-.progress-message strong { display: block; }
-.progress-message small { display: block; margin-top: 1px; color: var(--text-secondary); font-size: 10px; }
+.progress-message { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 2px; min-height: 52px; margin-top: 0; padding: 8px 14px; border-radius: 13px; background: var(--blue-soft); }
+.progress-message strong { font-size: 14px; line-height: 1.25; }
+.progress-message small { color: var(--text-secondary); font-size: 11px; line-height: 1.35; }
 .courses-overview { margin-top: 12px; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 8px; padding: 0 4px; }
 .section-head > div { display: flex; align-items: center; gap: 10px; }
@@ -637,10 +634,9 @@ body[data-page="dashboard"] { overflow-x: clip; }
   .empty-state { grid-template-columns: 1fr 90px; }
   .empty-mascot { grid-column: 2; width: 90px; }
   .overview-card { min-height: 0; padding: 18px; }
-  .today-summary { grid-template-columns: 94px minmax(0, 1fr); }
-  .progress-ring { width: 86px; height: 86px; }
-  .progress-ring::before { width: 66px; height: 66px; }
-  .progress-ring span { font-size: 19px; }
+  .today-summary { grid-template-columns: 102px minmax(0, 1fr); }
+  .progress-ring { width: 100px; height: 100px; }
+  .progress-ring::before { width: 76px; height: 76px; }
   .course-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
@@ -661,7 +657,6 @@ body[data-page="dashboard"] { overflow-x: clip; }
   .attention-task { grid-template-columns: 20px minmax(0, 1fr) 15px; }
   .attention-task .status { grid-column: 2; width: max-content; }
   .attention-task .row-arrow { grid-column: 3; grid-row: 1 / 3; }
-  .overview-caption { display: none; }
   .today-summary { grid-template-columns: 1fr; justify-items: center; }
   .summary-statuses { width: 100%; }
 }

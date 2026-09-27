@@ -1,8 +1,6 @@
 import * as apiClient from "./storageService.js";
 import { getCurrentUser } from "./authService.js";
 
-const progressBeforeCompletion = new Map();
-
 /**
  * Create a new task.
  * @param {Object} taskData - { courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress }
@@ -21,6 +19,7 @@ export async function createTask(taskData) {
     importance: taskData.importance || "medium",
     estimatedDuration: taskData.estimatedDuration ?? null,
     currentProgress: taskData.currentProgress || 0,
+    completed: taskData.completed ?? Number(taskData.currentProgress) === 100,
   });
   return task;
 }
@@ -130,16 +129,16 @@ export async function updateTaskProgress(taskId, currentProgress) {
 }
 
 /**
- * Mark a task as completed (100% progress).
+ * Mark a task as completed without changing its progress.
  * @param {string} taskId
  * @returns {Promise<Object>} Updated task
  */
 export async function markTaskCompleted(taskId) {
-  return updateTaskProgress(taskId, 100);
+  return updateTask(taskId, { completed: true });
 }
 
 /**
- * Toggle task completion: if at 100%, revert to previous progress; otherwise mark as 100%.
+ * Toggle task completion without changing its progress.
  * @param {string} taskId
  * @returns {Promise<Object>} Updated task
  */
@@ -147,14 +146,7 @@ export async function toggleTaskCompleted(taskId) {
   const task = await getTaskById(taskId);
   if (!task) throw new Error("Task not found");
 
-  if (task.currentProgress === 100) {
-    const progress = progressBeforeCompletion.get(taskId) ?? 0;
-    progressBeforeCompletion.delete(taskId);
-    return updateTaskProgress(taskId, progress);
-  }
-
-  progressBeforeCompletion.set(taskId, task.currentProgress);
-  return updateTaskProgress(taskId, 100);
+  return updateTask(taskId, { completed: !Boolean(Number(task.completed)) });
 }
 
 /**
@@ -175,7 +167,7 @@ export async function getOverdueTasks() {
   const tasks = await getTasksByUserId();
   const now = new Date();
   return tasks.filter((task) => {
-    const isNotCompleted = task.currentProgress < 100;
+    const isNotCompleted = !Boolean(Number(task.completed));
     const isPastDeadline = new Date(task.deadline) < now;
     return isNotCompleted && isPastDeadline;
   });
@@ -187,4 +179,5 @@ export const list = getTasksByCourseId;
 export const update = updateTask;
 export const remove = deleteTask;
 export const setProgress = updateTaskProgress;
+export const markCompleted = markTaskCompleted;
 export const toggleCompleted = toggleTaskCompleted;

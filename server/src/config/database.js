@@ -37,10 +37,16 @@ db.exec(`
     importance TEXT NOT NULL DEFAULT 'medium',
     estimatedDuration REAL,
     currentProgress INTEGER NOT NULL DEFAULT 0,
+    completed INTEGER NOT NULL DEFAULT 0,
     createdAt TEXT NOT NULL,
     FOREIGN KEY (courseId) REFERENCES courses(courseId)
   )
 `);
+
+if (!db.prepare('PRAGMA table_info(tasks)').all().some((column) => column.name === 'completed')) {
+  db.exec('ALTER TABLE tasks ADD COLUMN completed INTEGER NOT NULL DEFAULT 0');
+  db.exec('UPDATE tasks SET completed = 1 WHERE currentProgress = 100');
+}
 
 // Indexes
 db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_course_id ON tasks(courseId)`);

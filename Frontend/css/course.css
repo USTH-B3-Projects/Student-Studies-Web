@@ -294,6 +294,7 @@ body[data-page="course"]::after {
 .task-row.completed {
   opacity: 0.7;
 }
+.all-tasks-main .task-row.completed > .task-menu { grid-column: 4; }
 .check {
   width: 23px;
   height: 23px;
@@ -625,6 +626,7 @@ body[data-page="course"]::after {
   .task-priority strong {
     display: inline;
   }
+  .all-tasks-main .task-row.completed > .task-menu { grid-column: 3; }
   .task-actions {
     grid-column: 3;
     grid-row: 1 / span 2;
@@ -746,6 +748,7 @@ body[data-page="course-detail"] .task-preview-inner { padding-top: 15px; }
   .table-task-row > [data-label]::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 10px; font-weight: 600; }
   .table-task-row > .status { align-self: end; }
   .table-task-row > .task-menu { grid-column: 3; grid-row: 1; }
+  body[data-page="course-detail"] .table-task-row.completed > .task-menu { grid-column: 3; }
   .table-task-row > .task-preview { grid-column: 1 / -1; }
 }
 @media (max-width: 480px) {
@@ -827,11 +830,15 @@ body[data-page="course-detail"] .table-task-row {
   padding: 13px 14px;
 }
 body[data-page="course-detail"] .table-task-row:first-child { border-top: 0; }
+body[data-page="course-detail"] .table-task-row.completed > .task-menu { grid-column: 8; }
 .table-task-name { display: block; }
 .table-task-name strong, .table-task-name small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .table-task-name small { margin-top: 3px; color: var(--text-secondary); font-size: 11px; }
 .task-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .task-badges .status { padding: 4px 8px; font-size: 10px; text-transform: capitalize; }
+.task-row .status.low { color: var(--green); background: var(--green-soft); }
+.task-row .status.medium { color: var(--amber); background: var(--amber-soft); }
+.task-row .status.high { color: var(--blue); background: var(--blue-soft); }
 .workload-warning { color: var(--warning); font-size: 10px; font-weight: 700; }
 .task-deadline, .task-deadline small { display: block; font-size: 12px; }
 .task-deadline small { margin-top: 3px; color: var(--text-secondary); }
@@ -847,6 +854,7 @@ body[data-page="course-detail"] .table-task-row:first-child { border-top: 0; }
   .recommended-body { grid-template-columns: 42px minmax(180px, 1fr) minmax(140px, .8fr) auto auto; }
   .recommended-score { display: none; }
   body[data-page="course-detail"] .table-task-row { grid-template-columns: 24px minmax(190px, 1.5fr) minmax(130px, 1fr) 95px minmax(115px, .8fr) 60px 34px; }
+  body[data-page="course-detail"] .table-task-row.completed > .task-menu { grid-column: 7; }
   .task-remaining { display: none; }
 }
 @media (max-width: 900px) {
