@@ -19,7 +19,7 @@ export async function createTask(taskData) {
     description: taskData.description || "",
     deadline: taskData.deadline,
     importance: taskData.importance || "medium",
-    estimatedDuration: taskData.estimatedDuration || null,
+    estimatedDuration: taskData.estimatedDuration ?? null,
     currentProgress: taskData.currentProgress || 0,
   });
   return task;
@@ -74,8 +74,13 @@ export function getProgress(tasks) {
  * @returns {Promise<Object|null>} Task or null if not found
  */
 export async function getTaskById(taskId) {
+  const user = getCurrentUser();
+  if (!user) throw new Error("Not logged in");
+
   try {
-    const task = await apiClient.get(`/tasks/${taskId}`);
+    const task = await apiClient.get(
+      `/tasks/${taskId}?username=${encodeURIComponent(user.username)}`
+    );
     return task || null;
   } catch {
     return null;

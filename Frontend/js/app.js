@@ -752,7 +752,7 @@ function initDashboard() {
         todayLabel = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(today);
       const pulse = [
         ["pending", "Pending tasks", pending, ranked.filter((t) => !t.isOverdue), (t) => `Priority ${Math.round(t.priorityScore)}`, "No pending tasks"],
-        ["overdue", "Overdue tasks", overdue, enriched.filter((t) => t.isOverdue), (t) => fmtDateTime(t.deadline), "No overdue tasks"],
+        ["overdue", "Overdue tasks", overdue, enriched.filter((t) => t.isOverdue).sort((a, b) => new Date(a.deadline) - new Date(b.deadline)), (t) => fmtDateTime(t.deadline), "No overdue tasks"],
         ["today", "Due today", dueToday, enriched.filter((t) => !t.isOverdue && t.completionStatus !== "completed" && dueLabel(t.deadline) === "Due today"), (t) => fmtDateTime(t.deadline), "Nothing due today"],
         ["completed", "Completed", completed, enriched.filter((t) => t.completionStatus === "completed"), (t) => courses.find((course) => course.courseId === t.courseId)?.courseName || "Completed", "No completed tasks"],
       ];
