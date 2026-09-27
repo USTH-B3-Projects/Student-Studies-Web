@@ -228,6 +228,7 @@ body[data-page="dashboard"] .stats-grid { grid-template-columns: repeat(4, minma
 }
 
 .notification-wrapper { position: relative; display: flex; align-items: center; }
+.notification-wrapper > .icon-btn { border: 0; background: transparent; font-size: 20px; cursor: pointer; }
 .noti-badge { position: absolute; top: -2px; right: -2px; padding: 2px 6px; border-radius: 50%; color: #fff; background: var(--danger); font-size: 11px; font-weight: 700; }
 .noti-dropdown { position: absolute; z-index: 1000; top: 45px; right: 0; width: min(320px, calc(100vw - 32px)); border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
 .noti-header, .noti-item { padding: 12px 16px; border-bottom: 1px solid var(--border); }

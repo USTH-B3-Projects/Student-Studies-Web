@@ -653,6 +653,7 @@ function initShell() {
     location.href = "index.html#authCard";
     return null;
   }
+  if (!$("#notiBellBtn")) $(".user-actions .ui-switch")?.insertAdjacentHTML("afterend", '<div class="notification-wrapper"><button id="notiBellBtn" class="icon-btn" type="button" aria-label="Notifications">&#128276;<span id="notiBadge" class="noti-badge" hidden>0</span></button><div id="notiDropdown" class="noti-dropdown" hidden><div class="noti-header">Notifications</div><ul id="notiList" class="noti-list"></ul></div></div>');
   const name = u.studentName || u.username;
   const themeToggle = $("#themeToggle");
   const syncThemeToggle = () => {
