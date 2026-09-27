@@ -738,7 +738,8 @@ function initDashboard() {
         todayTasksForPulse = enriched.filter((task) => taskGroup(task) === "today"),
         completedTasks = enriched.filter((task) => taskGroup(task) === "completed"),
         attention = enriched.filter((t) => t.isOverdue || t.hasWorkloadWarning).sort((a, b) => b.priorityScore - a.priorityScore).slice(0, 3),
-        upcoming = enriched.filter((t) => t.completionStatus !== "completed").sort((a, b) => new Date(a.deadline) - new Date(b.deadline)).slice(0, 5);
+        now = new Date(),
+        upcoming = enriched.filter((t) => t.completionStatus !== "completed" && Number(t.currentProgress) < 100 && new Date(t.deadline) >= now).sort((a, b) => new Date(a.deadline) - new Date(b.deadline)).slice(0, 5);
       const today = new Date(),
         todayTasks = enriched.filter((task) => {
           const deadline = new Date(task.deadline);
