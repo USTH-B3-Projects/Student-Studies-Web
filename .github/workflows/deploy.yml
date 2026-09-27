@@ -1,0 +1,80 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Build deployable site
+        run: |
+          mkdir -p _site
+
+          # 1) Copy HTML files to site root (so index.html is at /)
+          cp Frontend/html/*.html _site/
+
+          # 2) Copy HTML subdirectories (e.g. html/ui/)
+          if [ -d Frontend/html/ui ]; then
+            cp -r Frontend/html/ui _site/ui
+          fi
+
+          # 3) Copy asset directories alongside HTML
+          cp -r Frontend/css    _site/css
+          cp -r Frontend/js     _site/js
+          cp -r Frontend/source _site/source
+
+          # 4) Copy logo
+          cp Frontend/logo.png _site/ 2>/dev/null || true
+
+          # 5) Rewrite "../" paths to "./" in HTML files
+          #    Covers: ../css/, ../js/, ../source/, ../logo.png
+          find _site -maxdepth 1 -name '*.html' -exec sed -i 's|\.\./css/|./css/|g' {} +
+          find _site -maxdepth 1 -name '*.html' -exec sed -i 's|\.\./js/|./js/|g' {} +
+          find _site -maxdepth 1 -name '*.html' -exec sed -i 's|\.\./source/|./source/|g' {} +
+          find _site -maxdepth 1 -name '*.html' -exec sed -i 's|\.\./logo\.png|./logo.png|g' {} +
+
+          # 6) Rewrite "../" paths in JS files (template literals inject img src
+          #    into the DOM, which resolves relative to the page URL, not the JS file)
+          find _site/js -name '*.js' -exec sed -i 's|\.\./source/|./source/|g' {} +
+          find _site/js -name '*.js' -exec sed -i 's|\.\./logo\.png|./logo.png|g' {} +
+
+          # 7) CSS url() paths resolve relative to the CSS file itself.
+          #    css/ is one level deep, so ../source/ already resolves to source/.
+          #    No rewriting needed for CSS files.
+
+          echo "=== Site structure ==="
+          find _site -type f | head -40
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
