@@ -31,7 +31,7 @@ function calculateUrgencyScore(deadline) {
 }
 
 function calculateWorkloadScore(estimatedDuration, currentProgress) {
-  const effectiveDuration = estimatedDuration || 2;
+  const effectiveDuration = estimatedDuration ?? 2;
   const remainingWorkload = effectiveDuration * (1 - currentProgress / 100);
 
   if (remainingWorkload > 6) return 100;
@@ -44,7 +44,7 @@ function calculateWorkloadScore(estimatedDuration, currentProgress) {
 function enrichTask(task) {
   const importanceScore = { 'very-low': 20, low: 40, medium: 60, high: 80, 'very-high': 100 }[task.importance];
   const urgencyScore = calculateUrgencyScore(task.deadline);
-  const effectiveDuration = task.estimatedDuration || 2;
+  const effectiveDuration = task.estimatedDuration ?? 2;
   const remainingWorkload = effectiveDuration * (1 - task.currentProgress / 100);
   const workloadScore = calculateWorkloadScore(task.estimatedDuration, task.currentProgress);
   const priorityScore = 0.5 * urgencyScore + 0.3 * importanceScore + 0.2 * workloadScore;
@@ -59,7 +59,7 @@ function enrichTask(task) {
   }
 
   let hasWorkloadWarning = false;
-  if (status === 'completed') {
+  if (status === 'completed' || task.estimatedDuration == null) {
     hasWorkloadWarning = false;
   } else if (status === 'overdue') {
     hasWorkloadWarning = true;
@@ -172,22 +172,28 @@ exports.getAll = (req, res) => {
 
 exports.getById = (req, res) => {
   const { id } = req.params;
+  const { username } = req.query;
+
+  if (!username) {
+    return res.status(400).json({ error: 'username is required' });
+  }
 
   try {
     const task = db.prepare(`
       SELECT 
-        id as taskId,
-        courseId,
-        taskName as name,
-        description,
-        deadline,
-        importance,
-        estimatedDuration,
-        currentProgress,
-        createdAt
-      FROM tasks
-      WHERE id = ?
-    `).get(id);
+        t.id as taskId,
+        t.courseId,
+        t.taskName as name,
+        t.description,
+        t.deadline,
+        t.importance,
+        t.estimatedDuration,
+        t.currentProgress,
+        t.createdAt
+      FROM tasks t
+      JOIN courses c ON c.courseId = t.courseId
+      WHERE t.id = ? AND c.username = ?
+    `).get(id, username);
 
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
@@ -218,7 +224,7 @@ exports.update = (req, res) => {
     if (importance !== undefined && !isValidImportance(importance)) {
       return res.status(400).json({ error: 'Importance is invalid' });
     }
-    if (estimatedDuration !== undefined && estimatedDuration <= 0) {
+    if (estimatedDuration != null && estimatedDuration <= 0) {
       return res.status(400).json({ error: 'estimatedDuration must be larger than 0' });
     }
     if (currentProgress !== undefined && !isValidProgress(currentProgress)) {
@@ -263,21 +269,29 @@ exports.delete = (req, res) => {
 };
 
 exports.smart = (req, res) => {
+  const { username, courseId } = req.query;
+
+  if (!username) {
+    return res.status(400).json({ error: 'username is required' });
+  }
+
   try {
     const tasks = db.prepare(`
       SELECT 
-        id as taskId,
-        courseId,
-        taskName as name,
-        description,
-        deadline,
-        importance,
-        estimatedDuration,
-        currentProgress,
-        createdAt
-      FROM tasks
+        t.id as taskId,
+        t.courseId,
+        t.taskName as name,
+        t.description,
+        t.deadline,
+        t.importance,
+        t.estimatedDuration,
+        t.currentProgress,
+        t.createdAt
+      FROM tasks t
+      JOIN courses c ON c.courseId = t.courseId
+      WHERE c.username = ? AND (? IS NULL OR t.courseId = ?)
       ORDER BY createdAt DESC
-    `).all();
+    `).all(username, courseId || null, courseId || null);
 
     const enriched = tasks.map(enrichTask);
     const recommendations = enriched
