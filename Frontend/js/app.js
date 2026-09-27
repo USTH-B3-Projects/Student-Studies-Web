@@ -688,7 +688,7 @@ function initShell() {
 
 function initPageTransitions() {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const isPageLink = (link) => link.origin === location.origin && /\/(dashboard|course|course-detail|tasks)\.html$/.test(link.pathname);
+  const isPageLink = (link) => link.origin === location.origin && /\/(dashboard|course|course-detail|tasks|calendar)\.html$/.test(link.pathname);
   const hasNativePageTransitions = /^https?:$/.test(location.protocol) && CSS.supports("selector(:active-view-transition)");
   if (!hasNativePageTransitions) document.documentElement.classList.add("fallback-page-transition");
   document.addEventListener("pointerenter", (event) => {
@@ -1199,3 +1199,4 @@ if (page === "dashboard") initDashboard();
 if (page === "course") initCourses();
 if (page === "course-detail") initCourseDetail();
 if (page === "tasks") initAllTasks();
+if (page === "calendar") initShell();
