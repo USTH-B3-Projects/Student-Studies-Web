@@ -1,6 +1,7 @@
 import * as courseService from "../services/courseService.js";
 import * as taskService from "../services/taskService.js";
 import { $, esc, fmtDate, fmtDateTime, localDateTimeValue, dueLabel, toast } from "../shared/ui.js";
+import { modal } from "./modal.js";
 
 function taskForm(task = {}) {
   const taskNameField = task.taskName || task.name || "";
@@ -10,7 +11,7 @@ function taskForm(task = {}) {
   const importance = ["very-low", "low", "medium", "high", "very-high"];
   const importanceIndex = Math.max(0, importance.indexOf(task.importance || "medium"));
   const markers = (values, labels) => `<span class="slider-markers">${values.map((value, index) => `<button type="button" class="slider-marker" style="left:${index * 25}%" data-range-value="${value}" aria-label="Set to ${labels[index]}"><span>${labels[index]}</span></button>`).join("")}</span>`;
-  return `<form class="modal-form task-modal-form"><div class="task-modal-body"><section class="task-details"><div class="section-heading"><div><strong>Basic Information</strong><small>Give your task a clear name and add any useful notes.</small></div></div><div class="form-field"><label>Task name <b>*</b></label><input class="input" name="taskName" required value="${esc(taskNameField)}" placeholder="e.g. Finish Deep Learning lab"></div><div class="form-field"><div class="field-label"><label>Note</label><small>Optional</small></div><textarea class="textarea" name="description" rows="3" maxlength="500" placeholder="Add a note...">${esc(task.description || "")}</textarea></div></section><section class="planning"><div class="section-heading"><div><strong>Planning &amp; Prioritization</strong><small>Set a deadline, estimate the effort, and indicate how important this task is.</small></div></div><div class="planning-grid"><div class="form-field"><label>Deadline <b>*</b></label><input class="input" type="datetime-local" name="deadline" required value="${task.deadline ? localDateTimeValue(task.deadline) : ""}"></div><div class="form-field duration-field"><label>Estimated duration</label><select class="select" data-duration-select>${[[".25", "15 minutes"], [".5", "30 minutes"], ["1", "1 hour"], ["", "2 hours"], ["3", "3 hours"], ["4", "4 hours"], ["5", "5 hours"]].map(([v, label]) => `<option value="${v}" ${v === "" ? duration === "" || String(duration) === "2" ? "selected" : "" : String(duration) === v ? "selected" : ""}>${label}</option>`).join("")}<option value="custom" ${custom ? "selected" : ""}>Other</option></select><input class="input custom-duration" data-custom-duration name="estimatedDuration" ${custom ? "required" : "hidden"} type="number" min="0.25" step="0.25" value="${duration}" placeholder="Hours"><small>Optional &middot; If not specified, we use a default of 2 hours.</small></div></div><div class="form-field range-field importance-range"><div class="field-label"><label>Importance <b>*</b></label><output data-range-output="importanceIndex"></output></div><div class="progress-slider"><span class="progress-slider-track" aria-hidden="true"><span class="progress-slider-active"></span></span>${markers([0, 1, 2, 3, 4], ["Very Low", "Low", "Medium", "High", "Very High"])}<input type="range" min="0" max="4" step="1" name="importanceIndex" value="${importanceIndex}" data-range data-labels="Very Low|Low|Medium|High|Very High"></div><input type="hidden" name="importance" value="${importance[importanceIndex]}"></div><div class="form-field range-field progress-range"><div class="field-label"><label>Progress</label><output data-range-output="currentProgress"></output></div><div class="progress-slider"><span class="progress-slider-track" aria-hidden="true"><span class="progress-slider-active"></span></span>${markers([0, 25, 50, 75, 100], ["0%", "25%", "50%", "75%", "100%"])}<input type="range" min="0" max="100" step="25" name="currentProgress" value="${Number(task.currentProgress || 0)}" data-range></div></div></section></div><div class="modal-actions"><button type="button" class="btn btn-outline" data-close>Cancel</button><button class="btn btn-primary"><span aria-hidden="true">+</span>${task.taskId ? "Save task" : "Create task"}</button></div></form>`;
+  return `<form class="modal-form task-modal-form"><div class="task-modal-body"><section class="task-details"><div class="section-heading"><div><strong>Basic Information</strong><small>Give your task a clear name and add any useful notes.</small></div></div><div class="form-field"><label>Task name <b>*</b></label><input class="input" name="taskName" required value="${esc(taskNameField)}" placeholder="e.g. Finish Deep Learning lab"></div><div class="form-field"><div class="field-label"><label>Note</label><small>Optional</small></div><textarea class="textarea" name="description" rows="3" maxlength="500" placeholder="Add a note...">${esc(task.description || "")}</textarea></div></section><section class="planning"><div class="section-heading"><div><strong>Planning &amp; Prioritization</strong><small>Set a deadline, estimate the effort, and indicate how important this task is.</small></div></div><div class="planning-grid"><div class="form-field"><label>Deadline <b>*</b></label><input class="input" type="datetime-local" name="deadline" required value="${task.deadline ? localDateTimeValue(task.deadline) : ""}"></div><div class="form-field duration-field"><label>Estimated duration</label><select class="select" data-duration-select>${[[".25", "15 minutes"], [".5", "30 minutes"], ["1", "1 hour"], ["", "2 hours"], ["3", "3 hours"], ["4", "4 hours"], ["5", "5 hours"]].map(([v, label]) => `<option value="${v}" ${v === "" ? duration === "" || String(duration) === "2" ? "selected" : "" : String(duration) === v ? "selected" : ""}>${label}</option>`).join("")}<option value="custom" ${custom ? "selected" : ""}>Other</option></select><input class="input custom-duration" data-custom-duration name="estimatedDuration" ${custom ? "required" : "hidden"} type="number" min="0.25" step="0.25" value="${duration}" placeholder="Hours"><small>Optional &middot; If not specified, we use a default of 2 hours.</small></div></div><div class="form-field range-field importance-range"><div class="field-label"><label>Importance <b>*</b></label><output data-range-output="importanceIndex"></output></div><div class="progress-slider"><span class="progress-slider-track" aria-hidden="true"><span class="progress-slider-active"></span></span>${markers([0, 1, 2, 3, 4], ["Very Low", "Low", "Medium", "High", "Very High"])}<input type="range" min="0" max="4" step="1" name="importanceIndex" value="${importanceIndex}" data-range data-labels="Very Low|Low|Medium|High|Very High"></div><input type="hidden" name="importance" value="${importance[importanceIndex]}"></div><div class="form-field range-field progress-range"><div class="field-label"><label>Progress</label><output data-range-output="currentProgress"></output></div><div class="progress-slider"><span class="progress-slider-track" aria-hidden="true"><span class="progress-slider-active"></span></span>${markers([0, 25, 50, 75, 100], ["0%", "25%", "50%", "75%", "100%"])}<input type="range" min="0" max="100" step="25" name="currentProgress" value="${Number(task.currentProgress || 0)}" data-range></div></div></section></div><div class="modal-actions"><button type="button" class="btn btn-outline" data-close>Cancel</button><button class="btn btn-primary">${task.taskId ? "" : `<span aria-hidden="true">+</span>`}${task.taskId ? "Save task" : "Create task"}</button></div></form>`;
 }
 function taskFormWithCourse(task, courses) {
   const selected = courses.find((course) => course.courseId === task.courseId);
@@ -109,7 +110,7 @@ function taskDetails(t, includeStatus = false) {
       : t.hasWorkloadWarning
         ? ["warning", "Workload warning"]
         : ["pending", "In progress"];
-  return `<div class="task-details-panel"><p>${esc(t.description) || "No note provided."}</p><dl><div><dt>Deadline</dt><dd>${fmtDateTime(t.deadline)}</dd></div><div><dt>Importance</dt><dd>${t.importance.replace("-", " ")}</dd></div><div><dt>Progress</dt><dd>${t.currentProgress}%</dd></div><div><dt>Effective duration</dt><dd>${t.effectiveDuration}h${t.estimatedDuration == null ? " (default)" : ""}</dd></div><div><dt>Remaining workload</dt><dd>${t.remainingWorkload.toFixed(1)}h</dd></div><div><dt>Workload score</dt><dd>${t.workloadScore}</dd></div>${t.completionStatus !== "completed" ? `<div class="detail-priority"><dt>Priority score</dt><dd>${Math.round(t.priorityScore)}</dd></div>` : ""}${includeStatus ? `<div class="detail-status"><dt>Status</dt><dd><span class="status ${status[0]}">${status[1]}</span></dd></div>` : ""}</dl></div>`;
+  return `<div class="task-details-panel"><p>${esc(t.description) || "No note provided."}</p><dl><div><dt>Deadline</dt><dd>${fmtDateTime(t.deadline)}</dd></div><div><dt>Importance</dt><dd class="importance-label ${t.importance}">${t.importance.replace("-", " ")}</dd></div><div><dt>Progress</dt><dd>${t.currentProgress}%</dd></div><div><dt>Effective duration</dt><dd>${t.effectiveDuration}h${t.estimatedDuration == null ? " (default)" : ""}</dd></div><div><dt>Remaining workload</dt><dd>${t.remainingWorkload.toFixed(1)}h</dd></div><div><dt>Workload score</dt><dd>${t.workloadScore}</dd></div>${t.completionStatus !== "completed" ? `<div class="detail-priority"><dt>Priority score</dt><dd>${Math.round(t.priorityScore)}</dd></div>` : ""}${includeStatus ? `<div class="detail-status"><dt>Status</dt><dd><span class="status ${status[0]}">${status[1]}</span></dd></div>` : ""}</dl></div>`;
 }
 function warningList(tasks) {
   return tasks.length ? `<div class="card warning-banner warning-list"><div class="warning-heading"><div class="warning-icon" aria-hidden="true">!</div><div><h3>Workload Warning</h3><p>${tasks.length} ${tasks.length === 1 ? "task needs" : "tasks need"} attention</p></div></div><div class="warning-items">${tasks.map((t) => { const taskNameField = t.taskName || t.name; return `<article class="warning-task" tabindex="0" role="button" aria-expanded="false"><div><strong>${esc(taskNameField)}</strong><small>${dueLabel(t.deadline)} &middot; ${t.remainingWorkload.toFixed(1)}h remaining</small></div><span class="status ${t.isOverdue ? "overdue" : "warning"}">${t.isOverdue ? "Overdue" : "High workload"}</span><span class="warning-arrow" aria-hidden="true">&rsaquo;</span>${taskDetails(t)}</article>`; }).join("")}</div></div>` : "";
@@ -223,6 +224,32 @@ function courseForm(course = {}) {
   return `<form class="modal-form"><div class="form-field"><label>Course name</label><input class="input" name="courseName" required value="${esc(course.courseName || "")}" placeholder="e.g. Deep Learning"></div><div class="form-field"><label>Color</label><input class="input" name="color" type="color" value="${course.color || "#1769ff"}"></div><div class="modal-actions"><button type="button" class="btn btn-outline" data-close>Cancel</button><button class="btn btn-primary">Save course</button></div></form>`;
 }
 
+function addCourse(onAdded = () => {}) {
+  modal("Add course", courseForm(), async (data, close) => {
+    try {
+      await courseService.createCourse({ courseName: data.get("courseName"), color: data.get("color") });
+      close();
+      await onAdded();
+      toast("Course added");
+    } catch (error) { toast(error.message); }
+  });
+}
+
+async function addTask(onAdded = () => {}) {
+  try {
+    const courses = await courseService.getCoursesByUserId();
+    modal("Add task", taskFormWithCourse({}, courses), async (data, close) => {
+      try {
+        await taskService.create(taskData(data));
+        close();
+        await onAdded();
+        toast("Task added");
+      } catch (error) { toast(error.message); }
+    });
+    wireTaskCourseSelector(courses);
+  } catch (error) { toast(error.message); }
+}
+
 function courseTaskTable(tasks, selectedTaskId = null, selectedTaskIds = null) {
   return `<div class="course-task-table">${tasks.map((task) => {
     const name = task.taskName || task.name,
@@ -246,5 +273,7 @@ export {
   wireExpandable,
   wireTaskSort,
   courseForm,
+  addCourse,
+  addTask,
   courseTaskTable,
 };

@@ -62,6 +62,13 @@ body[data-page="course"]::after {
 .view-toggle button.active { color: #fff; background: var(--primary); box-shadow: 0 5px 12px rgba(18, 103, 237, .2); }
 .course-result-count { min-height: 17px; margin: 4px 3px 9px; color: color-mix(in srgb, var(--text-secondary) 84%, transparent); font-size: 11px; text-align: right; }
 .management-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.course-pagination { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin: 24px 0 0; }
+.course-pagination[hidden] { display: none; }
+.course-pagination button { min-width: 40px; height: 40px; padding: 0 11px; border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); background: var(--surface); font-weight: 700; transition: transform .18s ease, color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+.course-pagination button:hover:not(:disabled):not(.active) { transform: translateY(-1px); color: var(--primary); border-color: var(--primary); box-shadow: 0 7px 16px color-mix(in srgb, var(--primary) 14%, transparent); }
+.course-pagination button.active { color: #fff; border-color: var(--primary); background: var(--primary); box-shadow: 0 7px 16px color-mix(in srgb, var(--primary) 28%, transparent); }
+.course-pagination button:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent); outline-offset: 2px; }
+.course-pagination button:disabled { cursor: not-allowed; opacity: .42; }
 .management-card {
   min-height: 238px;
   padding: 15px 16px;
@@ -709,8 +716,8 @@ body[data-page="course-detail"] .table-task-row:hover, body[data-page="course-de
 .table-task-name { min-width: 0; display: flex; align-items: center; gap: 13px; }
 .table-task-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .table-task-row > .status { width: max-content; max-width: 100%; padding: 5px 11px; text-transform: capitalize; }
-.table-task-row > .status:is(.high, .very-high) { color: var(--danger); background: var(--red-soft); }
-.table-task-row > .status:is(.low, .very-low) { color: var(--success); background: var(--green-soft); }
+.table-task-row > .status.high { color: var(--danger); background: var(--red-soft); }
+.table-task-row > .status.low { color: var(--success); background: var(--green-soft); }
 .table-task-row > time, .table-task-row > span { font-size: 13px; }
 .table-progress { display: grid; grid-template-columns: 35px minmax(55px, 1fr); align-items: center; gap: 9px; font-size: 12px; }
 .table-progress .progress { height: 7px; }
@@ -839,6 +846,8 @@ body[data-page="course-detail"] .table-task-row.completed > .task-menu { grid-co
 .task-row .status.low { color: var(--green); background: var(--green-soft); }
 .task-row .status.medium { color: var(--amber); background: var(--amber-soft); }
 .task-row .status.high { color: var(--blue); background: var(--blue-soft); }
+.task-row .status.very-low { color: var(--very-low); background: var(--very-low-soft); }
+.task-row .status.very-high { color: var(--very-high); background: var(--very-high-soft); }
 .workload-warning { color: var(--warning); font-size: 10px; font-weight: 700; }
 .task-deadline, .task-deadline small { display: block; font-size: 12px; }
 .task-deadline small { margin-top: 3px; color: var(--text-secondary); }

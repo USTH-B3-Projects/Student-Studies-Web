@@ -3,7 +3,7 @@ import * as taskService from "../services/taskService.js";
 import * as smartService from "../services/smartService.js";
 import { $, esc, toast } from "../shared/ui.js";
 import { modal } from "../components/modal.js";
-import { groupedTasks, taskData, taskForm, taskFormWithCourse, taskGroup, wireTaskCourseSelector } from "../components/task-ui.js";
+import { addTask, groupedTasks, taskData, taskForm, taskGroup } from "../components/task-ui.js";
 import { initShell } from "../shared/shell.js";
 
 function initAllTasks() {
@@ -132,11 +132,7 @@ function initAllTasks() {
   };
   document.addEventListener("mousedown", (event) => { if (!courseAutocomplete.contains(event.target)) closeCourseOptions(); });
   $("#sortSelect").onchange = (event) => { sort = event.target.value; render(); };
-  $("#addTaskBtn").onclick = async () => {
-    const courses = await courseService.getCoursesByUserId();
-    modal("Add task", taskFormWithCourse({}, courses), async (data, close) => { try { await taskService.create(taskData(data)); close(); render(); toast("Task added"); } catch (error) { toast(error.message); } });
-    wireTaskCourseSelector(courses);
-  };
+  $("#addTaskBtn").onclick = () => addTask(render);
   render();
 }
 
