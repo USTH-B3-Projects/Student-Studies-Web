@@ -101,7 +101,9 @@ Stored Student example:
 | importance | ImportanceLevel | Yes | "medium" | User-selected importance |
 | estimatedDuration | Number or null | No | null | User-estimated duration in hours |
 | currentProgress | Number | Yes | 0 | Current task progress |
+| completed | Boolean | Yes | false | Whether the task is marked completed  |
 | createdAt | ISO Date String | Yes | Current time | Task creation time |
+
 
 ### Task Validation
 
@@ -112,9 +114,10 @@ Stored Student example:
 - `estimatedDuration` must remain null if the user does not provide it.
 - The default value of 2 hours is applied only when calculating remaining workload.
 - `currentProgress` must be one of: 0, 25, 50, 75, 100.
+- `completed` defaults to `Number(currentProgress) === 100` upon creation if not explicitly specified, and can be toggled independently without altering `currentProgress`.
 - `taskStatus` is derived from `currentProgress` and `deadline` and is not stored.
 - `displayStatus` is derived from `currentProgress` and `deadline` and is not stored.
-
+- `completionStatus` is derived from `currentProgress` and `deadline` and is not stored.
 <!--
 {
   "taskId": "task-001",
@@ -141,8 +144,25 @@ Stored Student example:
   "createdAt": "2026-09-12T09:10:00.000Z"
 }
 -->
+## 6. Calendar Session
 
-## 6. Allowed Values
+| Field | Type | Required | Default | Description |
+|---|---|---:|---|---|
+| sessionId | String | Yes | Generated | Unique calendar session identifier (UUID) |
+| taskId | String | Yes | null | ID of the scheduled task |
+| startTime | ISO Date String | Yes | null | Scheduled session start time |
+| endTime | ISO Date String | Yes | null | Scheduled session end time |
+
+### CalendarSession Validation
+
+- An authenticated user session must exist (`getCurrentUser()` must not be `null`).
+- `taskId` is required and must refer to an existing task.
+- `startTime` and `endTime` are required and must be valid date values stored as ISO 8601 strings.
+- `endTime` must be strictly later than `startTime` (`new Date(endTime) > new Date(startTime)`).
+- When updating a session, `sessionId` must match an existing session in the user's calendar storage and cannot be overwritten.
+- In the calendar sidebar, only tasks that are incomplete (`!completed` and `currentProgress < 100`) and overdue are eligible to be listed for scheduling.
+
+## 7. Allowed Values
 
 ### Urgency
 | Time until deadline | Urgency Score |
@@ -191,7 +211,7 @@ Stored Student example:
 | > 4 and ≤ 6h | 80 |
 | > 6h | 100 |
 
-## 7. Derived Task Values
+## 8. Derived Task Values
 
 The following values are calculated by relevant smart feature services and are not stored.
 
@@ -217,7 +237,7 @@ Otherwise:
 
 **priorityScore:**
 <br>
-priorityScore = 0.5 × urgencyScore + 0.3 × importanceScore + 0.2 × workloadScore
+priorityScore = 0.6 × urgencyScore + 0.25 × importanceScore + 0.15 × workloadScore
 
 **taskStatus:**
 <br>
@@ -247,16 +267,16 @@ Else if
 Else
     no warning
 
-## 8. WarningNotification (no stored data)
+## 9. WarningNotification (no stored data)
 
 | Field | Type | Description |
 |---|---|---|
-| taskName | String | Name of risky task |
+| taskId | String | Name of risky task |
 | deadline | ISO Date String | Task deadline |
 | remainingWorkload | Number | Remaining estimated hours |
 | message | String | Warning shown to student |
 
-## 9. StudyScheduleItem (no stored data)
+## 10. StudyScheduleItem (no stored data)
 
 | Field | Type | Stored? | Description |
 |---|---|---:|---|
@@ -265,14 +285,15 @@ Else
 | order | Number | No | Position in suggested plan |
 | remainingWorkloadAfter | Number | No | Remaining workload after suggested session |
 
-## 10. Relationships
+## 11. Relationships
 
 - One Student can have zero or many Courses.
 - One Course belongs to exactly one Student, identified by username.
 - One Course can have zero or many Tasks.
 - One Task belongs to exactly one Course, identified by courseId.
+- One Task can have zero or many CalendarSessions, linked by taskId.
 
-## 11. Deletion Rules
+## 12. Deletion Rules
 
 ### Delete Course
 
