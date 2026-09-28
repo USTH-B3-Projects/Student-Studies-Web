@@ -44,6 +44,17 @@
 - Login uses username and password. Password reset requires username, new password, and confirmation.
 - After a successful reset, the old password is replaced by the new password.
 
+### 2.4 Drag and Drop Study Schedule (Actor: Student/ System)
+
+- Switch between Day, Week, and Month calendar views and navigate across dates (Previous, Next, Today)
+- Filter active, overdue tasks in the sidebar by status (`All`, `Not scheduled`, `Scheduled`) and search by task or course name
+- Schedule study sessions by dragging tasks onto 30-minute timeline slots, automatically deriving `endTime` from `startTime` + `estimatedDuration`
+- Prompt the schedule editor automatically (with a 1-hour initial block) when scheduling a task that has no user-defined `remainingWorkload`
+- Reschedule sessions by dragging event blocks to new time slots or across dates in Month view
+- Inspect session details, manually update `startTime` and `endTime` via a custom date-time picker, or delete sessions
+
+**Functions:** `getSchedules()`, `createSchedule()`, `getScheduleByTaskId()`, `updateSchedule()`, `deleteSchedule()`
+
 ## 3. Smart Features (Actor: System)
 
 ### 3.1 Smart Task Prioritization
@@ -190,7 +201,6 @@ The notification is generated from the existing Workload Warning result and does
 4. Else if `(U >= 80 AND W >= 60) OR (U >= 60 AND W >= 80)` → show 
 
 **Functions:** `calculateRemainingWorkload()`, `getWorkloadScore()`, `hasWorkloadWarning()`, `getWarningNotification()`
-
 
 
 ## 4. Future Work for the Mobile App Development Course Version
