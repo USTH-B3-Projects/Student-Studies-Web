@@ -124,7 +124,7 @@ button {
   display: block;
   width: min(184px, 42vw);
   height: auto;
-  max-height: 42px;
+  max-height: 100px;
   object-fit: contain;
 }
 .nav {
