@@ -63,7 +63,7 @@ Overdue Status is not used as an additional factor in the Priority formula. Howe
 All tasks use the same Priority formula, including tasks without a user-defined Estimated Duration. This allows Priority Scores to be compared consistently across the recommendation list.
 
 $$
-\text{Priority} = 0.5(\text{Urgency}) + 0.3(\text{Importance}) + 0.2(\text{Workload})
+\text{Priority} = 0.6(\text{Urgency}) + 0.25(\text{Importance}) + 0.15(\text{Workload})
 $$
 
 #### Urgency Score
