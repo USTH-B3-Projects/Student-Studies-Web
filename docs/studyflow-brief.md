@@ -148,12 +148,12 @@ After calculating priority scores, the system excludes completed tasks and ranks
 | Progress | 50% |
 | Remaining Workload | 3h |
 | Workload Score | 60 |
-| Priority | `0.5(80) + 0.3(80) + 0.2(60) = 76` |
+| Priority | `0.6(80) + 0.25(80) + 0.15(60) = 77` |
 
 **Dashboard display**
 
 > **Finish DL Lab**  
-> Priority: 76  
+> Priority: 77  
 > Due tomorrow  
 > ~3h remaining
 
@@ -204,7 +204,7 @@ The notification is generated from the existing Workload Warning result and does
 
 When multiple tasks satisfy the Workload Warning condition, `getWorkloadWarning(tasks)` sorts the filtered warning list so that the riskiest tasks appear first.
 
-Sorting & tie-breaking order:
+Sorting & tie-breaking rule:
 
 1. **Overdue Status (`isOverdue` first):** Overdue tasks are prioritized at the top (kept as a safeguard for future-proofing, even though active `hasWorkloadWarning` tasks are currently non-overdue).
 2. **Urgency Score DESC (`urgencyScore`):** Tasks with closer deadlines (higher urgency) are ranked higher.
