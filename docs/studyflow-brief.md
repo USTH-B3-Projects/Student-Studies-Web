@@ -7,7 +7,7 @@
 **More important factors differentiate StudyFlow from a traditional to-do list:** 
 - Define deadline, importance level, estimated duration, and current progress to calculate task priority and recommend what should be done next.
 - Detect tasks that are becoming risky due to high urgency and remaining workload, and notify the student through workload warning notifications.
-- Use the student's available study time together with task priority and remaining workload to generate a recommended study schedule.
+- Provide an interactive drag-and-drop calendar that uses each task's estimated duration for a customized study timetable.
 
 ## 2. Core Features (3 Standard Features)
 
@@ -191,53 +191,6 @@ The notification is generated from the existing Workload Warning result and does
 
 **Functions:** `calculateRemainingWorkload()`, `getWorkloadScore()`, `hasWorkloadWarning()`, `getWarningNotification()`
 
-### 3.4 Smart Study Scheduling
-
-Smart Study Scheduling converts the ranked task list into a suggested study plan based on the student's available study time.
-
-#### Input
-
-The system reuses task information from Smart Task Prioritization:
-
-- Deadline
-- Importance
-- Estimated Duration
-- Current Progress
-- Priority Score
-
-Additional user input: `Available Study Time`
-
-#### Processing
-
-1. Calculate or retrieve the remaining workload of each active task.
-2. Rank tasks using the existing Smart Task Prioritization algorithm.
-3. Allocate the student's available study time to higher-priority tasks first.
-4. Continue allocating time to the next ranked task if available study time remains.
-
-The scheduling feature does not change the Priority Score. It uses the existing task ranking to determine how the available study time should be distributed.
-
-#### Output
-
-The system generates a recommended study schedule showing:
-
-* Recommended task
-* Suggested study duration
-* Task order
-* Remaining workload after the suggested study session
-
-Example:
-
-Available Study Time: **4 hours**
-
-1. Finish DL Lab — 2.5h
-2. Review Web App Lecture — 1h
-3. Prepare DSP Exercise — 0.5h
-
-If the total remaining workload is greater than the student's available study time, the system prioritizes the highest-ranked tasks and leaves the remaining tasks for a later study period.
-
-Functions:
-
-`generateStudySchedule(tasks, availableStudyTime)`
 
 
 ## 4. Future Work for the Mobile App Development Course Version
