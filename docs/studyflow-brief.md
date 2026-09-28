@@ -200,7 +200,17 @@ The notification is generated from the existing Workload Warning result and does
 2. Else if the task is **OVERDUE** → show **OVERDUE**.
 4. Else if `(U >= 80 AND W >= 60) OR (U >= 60 AND W >= 80)` → show 
 
-**Functions:** `calculateRemainingWorkload()`, `getWorkloadScore()`, `hasWorkloadWarning()`, `getWarningNotification()`
+#### Workload Warning Sorting & Tie-Breaking Rule
+
+When multiple tasks satisfy the Workload Warning condition, `getWorkloadWarning(tasks)` sorts the filtered warning list so that the riskiest tasks appear first.
+
+Sorting & tie-breaking order:
+
+1. **Overdue Status (`isOverdue` first):** Overdue tasks are prioritized at the top (kept as a safeguard for future-proofing, even though active `hasWorkloadWarning` tasks are currently non-overdue).
+2. **Urgency Score DESC (`urgencyScore`):** Tasks with closer deadlines (higher urgency) are ranked higher.
+3. **Workload Score DESC (`workloadScore`):** If two tasks have the same Urgency Score, the task with the larger remaining workload (higher workload score) is shown first.
+
+**Functions:** `calculateRemainingWorkload()`, `calculateWorkloadScore()`, `hasWorkloadWarning()`, `getUserNotifications()`
 
 
 ## 4. Future Work for the Mobile App Development Course Version
