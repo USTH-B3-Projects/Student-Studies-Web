@@ -32,10 +32,10 @@ Provides the common interface for reading and writing StudyFlow data in `localSt
 
 | Function | Parameters | Expected return | Responsibility |
 | --- | --- | --- | --- |
-| `initStorage()` | None | `void` | Initialize missing StudyFlow storage keys with their default values. |
-| `getData(key)` | `key: string` | `any` | Read and parse data stored under a key. |
-| `saveData(key, data)` | `key: string`, `data: any` | `void` | Convert data to JSON and save it under a key. |
-| `removeData(key)` | `key: string` | `void` | Remove data stored under a key. |
+| `get(endpoint)` | `endpoint: string` | `Promise<any>` | Read and parse data from the specified endpoint/query. |
+| `post(endpoint)` | `endpoint: string`, `body: object` | `Promise<any>` | RValidate and create a new record at the specified endpoint. |
+| `put(endpoint)` | `endpoint: string`, `body: object` | `Promise<any>` | Validate and update an existing record at the specified endpoint. |
+| `del(endpoint)` | `endpoint: string` | `Promise<void>` | Delete a record at the specified endpoint. |
 
 ### Storage keys
 
@@ -122,7 +122,7 @@ Calculates priority-related task values, ranks non-completed tasks, and provides
 | `getImportanceScore(importance)` | `importance: string` | `number` | Convert an importance level into its numeric score. |
 | `calculateRemainingWorkload(task)` | `task: Task` | `number` | Calculate remaining workload using the task's `estimatedDuration`, or a fallback duration of 2 hours when it is `null`. |
 | `getWorkloadScore(remainingWorkload)` | `remainingWorkload: number` | `number` | Convert remaining workload into its numeric workload score. |
-| `calculatePriority(task)` | `task: Task` | `number` | Calculate `0.5 * urgency + 0.3 * importance + 0.2 * workload`. |
+| `calculatePriority(task)` | `task: Task` | `number` | Calculate `0.6 * urgency + 0.25 * importance + 0.15 * workload`. |
 | `rankTasks(tasks)` | `tasks: Task[]` | `Task[]` | Exclude completed tasks and return the remaining tasks in priority ranking order without storing calculated values. |
 | `getGlobalRecommendation(tasks)` | `tasks: Task[]` | `Task \| null` | Return the highest-ranked non-completed task from the student's tasks. |
 | `getLocalRecommendation(tasks)` | `tasks: Task[]` | `Task \| null` | Return the highest-ranked non-completed task from the tasks belonging to one course. |
@@ -189,48 +189,27 @@ When a workload warning is generated, the returned object contains:
 
 The warning notification is calculated at runtime and is not stored.
 
-## `studyScheduleService.js`
+### Workload warning & tie-breaking rule
 
-Generates a recommended study schedule based on ranked tasks and the student's available study time.
+A task triggers `hasWorkloadWarning` when it is incomplete (`!completed`), not overdue, has a user-entered `estimatedDuration != null`, and satisfies `(urgencyScore >= 80 && workloadScore >= 60)` or `(urgencyScore >= 60 && workloadScore >= 80)`.
+
+`getWorkloadWarning(tasks)` sorts risky tasks :
+
+1. **Overdue status:** `isOverdue` tasks first (kept for future-proofing).
+2. **Urgency score:** descending (closer deadlines first).
+3. **Workload score:** descending (more remaining work first).
+
+## `calendarService.js`
+
+Manages drag-and-drop study sessions stored in `localStorage` under `studyflow_calendar_sessions_${user.username}`
 
 | Function | Parameters | Expected return | Responsibility |
 | --- | --- | --- | --- |
-| `generateStudySchedule(tasks, availableStudyTime)` | `tasks: Task[]`, `availableStudyTime: number` | `StudyScheduleItem[]` | Rank non-completed tasks, allocate available study time to higher-priority tasks first, and return the recommended study schedule. |
-
-### Schedule generation
-
-The service reuses task ranking and remaining workload calculations from `priorityService.js`.
-
-The scheduling process:
-
-1. Exclude completed tasks.
-2. Rank the remaining tasks using `rankTasks()`.
-3. Retrieve each task's remaining workload using `calculateRemainingWorkload()`.
-4. Allocate available study time to higher-ranked tasks first.
-5. Continue to the next ranked task while available study time remains.
-6. Return the generated list of `StudyScheduleItem`.
-
-The scheduling process does not modify the task's priority score.
-
-### StudyScheduleItem
-
-Each generated schedule item contains:
-
-- `task`
-- `suggestedDuration`
-- `order`
-- `remainingWorkloadAfter`
-
-`StudyScheduleItem` values are generated at runtime and are not stored.
-
-### Scheduling rules
-
-For each ranked task:
-
-- `suggestedDuration` must not exceed the task's remaining workload.
-- `suggestedDuration` must not exceed the remaining available study time.
-- `remainingWorkloadAfter` is calculated after subtracting the suggested study duration.
-- Scheduling stops when no available study time remains or all eligible task workload has been allocated.
+| `getSchedules()` | None | `CalendarSession[]` | Return all scheduled sessions for the logged-in student. |
+| `createSchedule({ taskId, startTime, endTime })` | `object` | `CalendarSession` | Validate input, generate `sessionId`, and save a new session. |
+| `getScheduleByTaskId(taskId)` | `taskId: string` | `CalendarSession[]` | Return all sessions linked to `taskId`. |
+| `updateSchedule(sessionId, changes)` | `sessionId: string`, `changes: object` | `CalendarSession` | Validate and update an existing session while preserving `sessionId`. |
+| `deleteSchedule(sessionId)` | `sessionId: string` | `void` | Delete a scheduled session by ID.
 
 ## Module dependencies
 
@@ -242,6 +221,6 @@ For each ranked task:
 | `taskService.js` | `storageService.js`; course data when filtering tasks by student |
 | `priorityService.js` | Task data passed through function parameters |
 | `workloadWarningService.js` | `priorityService.js`; task data |
-| `studyScheduleService.js` | `priorityService.js`; task data |
+| `calendarService.js` | `authService.js` (`getCurrentUser`); `localStorage`[cite: 37, 42] |
 
 Page scripts and UI components may call service functions and coordinate data between services, but service modules must not directly manipulate HTML elements.
