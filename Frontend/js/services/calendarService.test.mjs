@@ -17,4 +17,8 @@ assert.equal(service.getSchedules()[0].endTime, "2026-09-28T10:00:00.000Z");
 service.deleteSchedule(first.sessionId);
 assert.equal(service.getSchedules().length, 1);
 assert.throws(() => service.createSchedule({ taskId: "task-1", startTime: "2026-09-28T10:00:00Z", endTime: "2026-09-28T09:00:00Z" }));
+const overnight = { startTime: "2026-09-28T23:00:00", endTime: "2026-09-29T02:00:00" };
+assert.deepEqual(service.getScheduleSegment(overnight, "2026-09-28"), { start: new Date("2026-09-28T23:00:00"), end: new Date("2026-09-29T00:00:00"), topMinutes: 1380, durationMinutes: 60 });
+assert.deepEqual(service.getScheduleSegment(overnight, "2026-09-29"), { start: new Date("2026-09-29T00:00:00"), end: new Date("2026-09-29T02:00:00"), topMinutes: 0, durationMinutes: 120 });
+assert.equal(service.getScheduleSegment(overnight, "2026-09-30"), null);
 console.log("calendarService checks passed");

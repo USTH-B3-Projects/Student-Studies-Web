@@ -201,6 +201,7 @@ body[data-page="dashboard"] .stats-grid { grid-template-columns: repeat(4, minma
 .upcoming-row .task-link { display: contents; }
 .upcoming-row .task-link .row-arrow { grid-column: 6; grid-row: 1; }
 .upcoming-row time { font-weight: 700; }
+.upcoming-view-all { display: block; margin: 12px 12px 0; text-align: right; }
 .mini-empty.compact { min-height: 100px; }
 @media (max-width: 980px) {
   body[data-page="dashboard"] .pulse-bar { grid-template-columns: 1fr; }

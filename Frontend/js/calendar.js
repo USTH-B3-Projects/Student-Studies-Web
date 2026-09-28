@@ -105,7 +105,7 @@ function renderTimeline(days) {
   const schedules = calendarService.getSchedules();
   const calendar = $("#weeklyCalendar");
   calendar.className = `weekly-calendar ${view === "day" ? "day-calendar" : ""}`;
-  calendar.innerHTML = `<div class="calendar-corner">GMT${-new Date().getTimezoneOffset() / 60 >= 0 ? "+" : ""}${-new Date().getTimezoneOffset() / 60}</div>${days.map((day) => `<div class="calendar-day-head ${dateKey(day) === today ? "today" : ""}"><strong>${new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(day)}</strong><span>${day.getDate()}</span></div>`).join("")}<div class="calendar-times">${Array.from({ length: END_HOUR - START_HOUR - 1 }, (_, index) => `<span style="top:${(index + 1) * SLOT_HEIGHT}px">${pad(START_HOUR + index + 1)}:00</span>`).join("")}</div>${days.map((day) => `<div class="calendar-day-body ${dateKey(day) === today ? "today" : ""}" data-calendar-date="${dateKey(day)}">${schedules.filter((schedule) => dateKey(new Date(schedule.startTime)) === dateKey(day)).map(renderEvent).join("")}</div>`).join("")}`;
+  calendar.innerHTML = `<div class="calendar-corner">GMT${-new Date().getTimezoneOffset() / 60 >= 0 ? "+" : ""}${-new Date().getTimezoneOffset() / 60}</div>${days.map((day) => `<div class="calendar-day-head ${dateKey(day) === today ? "today" : ""}"><strong>${new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(day)}</strong><span>${day.getDate()}</span></div>`).join("")}<div class="calendar-times">${Array.from({ length: END_HOUR - START_HOUR - 1 }, (_, index) => `<span style="top:${(index + 1) * SLOT_HEIGHT}px">${pad(START_HOUR + index + 1)}:00</span>`).join("")}</div>${days.map((day) => `<div class="calendar-day-body ${dateKey(day) === today ? "today" : ""}" data-calendar-date="${dateKey(day)}">${schedules.map((schedule) => renderEvent(schedule, day)).join("")}</div>`).join("")}`;
   bindEventBlocks();
 }
 
@@ -120,7 +120,7 @@ function renderMonth() {
   calendar.className = "month-calendar";
   calendar.innerHTML = `${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => `<div class="month-weekday">${day}</div>`).join("")}${days.map((day) => {
     const key = dateKey(day);
-    const daySchedules = schedules.filter((schedule) => dateKey(new Date(schedule.startTime)) === key && tasks.some((task) => task.taskId === schedule.taskId));
+    const daySchedules = schedules.filter((schedule) => calendarService.getScheduleSegment(schedule, day) && tasks.some((task) => task.taskId === schedule.taskId));
     return `<div class="month-day ${day.getMonth() !== month.getMonth() ? "outside" : ""} ${key === today ? "today" : ""}" data-month-date="${key}"><button class="month-date" type="button" aria-label="Open ${formatDate(day)} in day view">${day.getDate()}</button><div class="month-events">${daySchedules.slice(0, 3).map(renderMonthEvent).join("")}${daySchedules.length > 3 ? `<span class="month-more">+${daySchedules.length - 3} more</span>` : ""}</div></div>`;
   }).join("")}`;
   bindEventBlocks();
@@ -156,16 +156,16 @@ function bindEventBlocks() {
   });
 }
 
-function renderEvent(schedule) {
+function renderEvent(schedule, day) {
   const task = tasks.find((item) => item.taskId === schedule.taskId);
   if (!task) return "";
   const course = courseFor(task);
   const start = new Date(schedule.startTime);
   const end = new Date(schedule.endTime);
-  const startMinutes = start.getHours() * 60 + start.getMinutes() - START_HOUR * 60;
-  const duration = (end - start) / 60000;
-  const top = Math.max(0, startMinutes);
-  const height = Math.max(28, Math.min(duration, (END_HOUR - START_HOUR) * 60 - top));
+  const segment = calendarService.getScheduleSegment(schedule, day);
+  if (!segment) return "";
+  const top = segment.topMinutes;
+  const height = Math.max(28, segment.durationMinutes);
   return `<button class="calendar-event" type="button" draggable="true" data-calendar-session="${esc(schedule.sessionId)}" style="--accent:${esc(course.color || "#1267ed")};top:${top}px;height:${height}px" title="Open schedule details"><strong>${esc(task.taskName || task.name)}</strong><span>${esc(formatTime(start))} – ${esc(formatTime(end))}</span></button>`;
 }
 
@@ -367,7 +367,7 @@ function editSchedule(sessionId) {
   const schedule = calendarService.getSchedules().find((item) => item.sessionId === sessionId);
   const task = tasks.find((item) => item.taskId === schedule?.taskId);
   if (!schedule || !task) return;
-  const close = modal(`<header><div><span class="eyebrow">Edit schedule</span><h2>${esc(task.taskName || task.name)}</h2></div><button type="button" data-calendar-close aria-label="Close">×</button></header><form id="calendarEditForm"><div class="schedule-field"><span>Start</span><input name="startTime" type="datetime-local" value="${localValue(schedule.startTime)}" required></div><div class="schedule-field"><span>End</span><input name="endTime" type="datetime-local" value="${localValue(schedule.endTime)}" required></div><p class="calendar-form-error" role="alert"></p><footer><button class="btn btn-outline" type="button" data-calendar-close>Cancel</button><button class="btn btn-primary">Save schedule</button></footer></form>`);
+  const close = modal(`<header><div><span class="eyebrow">Edit schedule</span><h2>${esc(task.taskName || task.name)}</h2></div><button type="button" data-calendar-close aria-label="Close">×</button></header><form id="calendarEditForm"><div class="schedule-field"><span>Start</span><input name="startTime" type="datetime-local" value="${localValue(schedule.startTime)}" required></div><div class="schedule-field"><span>End</span><input name="endTime" type="datetime-local" value="${localValue(schedule.endTime)}" required></div><p class="calendar-form-error" role="alert"></p><footer><button class="btn btn-outline" type="button" data-calendar-close>Cancel</button><button class="btn btn-primary" type="submit">Save schedule</button></footer></form>`);
   enhanceScheduleDateTime($("#calendarEditForm [name=startTime]"), "Start");
   enhanceScheduleDateTime($("#calendarEditForm [name=endTime]"), "End");
   $("#calendarEditForm").onsubmit = (event) => {

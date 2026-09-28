@@ -32,6 +32,10 @@ export async function register(studentName, username, password, confirmPassword)
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 export async function login(username, password) {
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    return { success: false, error: "Log out before signing in with another account." };
+  }
   try {
     const result = await apiClient.post("/auth/login", { username, password });
     // Store minimal user info in localStorage for session management
