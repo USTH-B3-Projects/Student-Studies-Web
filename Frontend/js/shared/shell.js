@@ -63,10 +63,17 @@ async function initNotifications() {
     : '<li class="noti-empty">Great job! You have no workload warnings.</li>';
   if (bell.dataset.bound) return;
   bell.dataset.bound = "true";
+  dropdown.hidden = false;
+  const setDropdownOpen = (open) => {
+    dropdown.classList.toggle("open", open);
+    dropdown.setAttribute("aria-hidden", String(!open));
+    bell.setAttribute("aria-expanded", String(open));
+  };
+  setDropdownOpen(false);
   bell.onclick = (event) => {
     event.stopPropagation();
-    const opening = dropdown.hidden;
-    dropdown.hidden = !opening;
+    const opening = !dropdown.classList.contains("open");
+    setDropdownOpen(opening);
     if (opening) {
       notifications.forEach((item) => { item.read = true; readIds.add(item.id); });
       localStorage.setItem(readKey, JSON.stringify([...readIds]));
@@ -74,12 +81,12 @@ async function initNotifications() {
     }
   };
   document.addEventListener("click", (event) => {
-    if (!dropdown.contains(event.target) && event.target !== bell) dropdown.hidden = true;
+    if (!dropdown.contains(event.target) && event.target !== bell) setDropdownOpen(false);
   });
   list.onclick = (event) => {
     const notification = event.target.closest("[data-notification-index]");
     if (!notification) return;
-    dropdown.hidden = true;
+    setDropdownOpen(false);
     openNotification(notifications[Number(notification.dataset.notificationIndex)]);
   };
 }
