@@ -52,7 +52,7 @@ function enrichTask(task) {
   const now = new Date();
   const deadlineDate = new Date(task.deadline);
   let status = 'pending';
-  if (task.completed) {
+  if (task.currentProgress === 100) {
     status = 'completed';
   } else if (deadlineDate < now) {
     status = 'overdue';

@@ -59,12 +59,11 @@ function initAllTasks() {
       document.querySelectorAll("[data-filter]").forEach((button) => button.onclick = () => { status = button.dataset.filter; saveStatus(); render(); });
       document.querySelectorAll("[data-complete]").forEach((button) => button.onclick = async (event) => {
         event.preventDefault();
-        const taskId = button.dataset.complete, top = button.closest("[data-task-id]").getBoundingClientRect().top, scrollY = window.scrollY;
+        event.stopPropagation();
         try {
-          await taskService.toggleCompleted(taskId);
+          await taskService.markCompleted(button.dataset.complete);
           await render();
-          const task = document.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
-          requestAnimationFrame(() => task ? window.scrollBy(0, task.getBoundingClientRect().top - top) : window.scrollTo(0, scrollY));
+          toast("Task completed");
         } catch (error) { toast(error.message); }
       });
       document.querySelectorAll("[data-edit]").forEach((button) => button.onclick = () => {

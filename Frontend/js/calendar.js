@@ -48,7 +48,7 @@ function courseFor(task) {
 }
 
 function isCompleted(task) {
-  return Boolean(Number(task.completed)) || Number(task.currentProgress) === 100;
+  return Number(task.currentProgress) === 100;
 }
 
 function durationHours(task) {

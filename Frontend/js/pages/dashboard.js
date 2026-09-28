@@ -60,9 +60,11 @@ function initDashboard() {
       $("[data-add-course]").onclick = () => addCourse(render);
       $("[data-add-task]").onclick = () => addTask(render);
       $("#upcomingTasks").innerHTML = upcoming.length ? `<div class="upcoming-head"><span>Deadline</span><span>Task</span><span>Course</span><span>Priority</span><span>Progress</span><span></span></div>${upcoming.map((task) => { const course = courses.find((item) => item.courseId === task.courseId), taskName = task.taskName || task.name; return `<div class="upcoming-row"><time datetime="${esc(task.deadline)}">${fmtDate(task.deadline)}</time><a class="task-link" href="course-detail.html?courseId=${encodeURIComponent(task.courseId)}"><span>${esc(taskName)}</span><span class="row-arrow" aria-hidden="true">›</span></a><span>${esc(course?.courseName || "Course")}</span><strong class="upcoming-priority ${priorityLevel(task.priorityScore)}">${Math.round(task.priorityScore)}</strong><div class="task-progress"><div class="progress" aria-label="${task.currentProgress}% complete"><span style="width:${task.currentProgress}%"></span></div><span>${task.currentProgress}%</span></div></div>`; }).join("")}` : `<div class="mini-empty compact"><strong>You're all caught up.</strong><span>No pending tasks.</span></div>`;
-      document.querySelectorAll("[data-dashboard-complete]").forEach((button) => button.onclick = async () => {
+      document.querySelectorAll("[data-dashboard-complete]").forEach((button) => button.onclick = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         try {
-          await taskService.toggleCompleted(button.dataset.dashboardComplete);
+          await taskService.markCompleted(button.dataset.dashboardComplete);
           await render();
         } catch (error) {
           toast(error.message);

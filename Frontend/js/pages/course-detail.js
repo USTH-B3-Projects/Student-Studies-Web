@@ -25,7 +25,7 @@ function initCourseDetail() {
         ranked = smartService.rankTasks(raw),
         all = [
           ...ranked,
-          ...raw.filter((task) => Boolean(Number(task.completed))).map((task) => smartService.enrich(task)),
+          ...raw.map((task) => smartService.enrich(task)).filter((task) => task.completionStatus === "completed"),
         ];
       const course = await courseService.getCourseById(courseId);
       if (!course || course.username !== u.username) {
@@ -120,7 +120,9 @@ function initCourseDetail() {
             });
           }),
       );
-      document.querySelectorAll("[data-complete]").forEach((button) => button.onclick = async () => {
+      document.querySelectorAll("[data-complete]").forEach((button) => button.onclick = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         try {
           await taskService.markCompleted(button.dataset.complete);
           await render();

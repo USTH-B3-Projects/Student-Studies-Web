@@ -97,7 +97,7 @@ export function enrich(task) {
   const importanceScore = calculateImportanceScore(task.importance);
   const remainingWorkload = calculateRemainingWorkload(task.estimatedDuration, task.currentProgress);
   const workloadScore = calculateWorkloadScore(remainingWorkload);
-  const completionStatus = Boolean(Number(task.completed)) ? "completed" : "pending";
+  const completionStatus = Number(task.currentProgress) === 100 ? "completed" : "pending";
   const isOverdue = completionStatus !== "completed" && new Date(task.deadline) < new Date();
   const hasWorkloadWarning =
     completionStatus !== "completed" &&

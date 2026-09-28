@@ -323,14 +323,19 @@ body[data-page="course"]::after {
   border: 2px solid #aebfdb;
   border-radius: 7px;
   background: #fff;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
   color: #fff;
 }
+.task-list { overflow-anchor: none; }
 .check.checked {
   background: var(--green);
   border-color: var(--green);
 }
+.check svg { width: 14px; height: 14px; display: block; }
 .task-name {
   font-weight: 800;
   overflow: hidden;

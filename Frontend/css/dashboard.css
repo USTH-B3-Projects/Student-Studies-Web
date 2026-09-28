@@ -426,7 +426,6 @@ body[data-page="dashboard"] { overflow-x: clip; }
   right: 228px;
   width: 30px;
   height: 30px;
-  background: url("../source/studyflow-decoration-pack/sparkles-yellow.png") center / contain no-repeat;
   pointer-events: none;
 }
 .pulse-heading { display: grid; gap: 2px; }
@@ -499,7 +498,6 @@ body[data-page="dashboard"] { overflow-x: clip; }
   top: 68px;
   width: 34px;
   height: 34px;
-  background: url("../source/studyflow-decoration-pack/sparkles-pink.png") center / contain no-repeat;
   pointer-events: none;
 }
 .recommendation-header { grid-column: 1; grid-row: 1; align-self: start; display: flex; align-items: center; gap: 16px; }
@@ -544,8 +542,9 @@ body[data-page="dashboard"] { overflow-x: clip; }
 .attention-task strong, .attention-task small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attention-task strong { font-size: 13px; }
 .attention-task small { margin-top: 3px; color: var(--text-secondary); font-size: 11px; }
-.task-check { width: 18px; height: 18px; border: 1.5px solid #8799bd; border-radius: 5px; background: transparent; }
+.task-check { width: 18px; height: 18px; flex: 0 0 18px; padding: 0; border: 1.5px solid #8799bd; border-radius: 5px; background: transparent; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .task-check:hover, .task-check:focus-visible { border-color: var(--primary); background: var(--blue-soft); outline: 2px solid color-mix(in srgb, var(--primary) 22%, transparent); outline-offset: 2px; }
+#stats, #attentionArea, #progressArea, #upcomingTasks { overflow-anchor: none; }
 .row-arrow { color: var(--text-secondary); font-size: 24px; line-height: 1; }
 .mini-empty { min-height: 185px; display: grid; place-content: center; justify-items: center; gap: 2px; color: var(--text-secondary); text-align: center; }
 .mini-empty img { width: 90px; height: 68px; object-fit: contain; }

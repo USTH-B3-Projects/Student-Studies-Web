@@ -39,7 +39,7 @@ function initCourseManagement(u) {
         tasks = await taskService.getTasksByUserId() ?? [];
       let visible = courses.map((course) => {
         const courseTasks = tasks.filter((task) => task.courseId === course.courseId), 
-          completed = courseTasks.filter((task) => Boolean(Number(task.completed))).length,
+          completed = courseTasks.filter((task) => Number(task.currentProgress) === 100).length,
           progress = taskService.getProgress(courseTasks);
         return { course, courseTasks, completed, progress, status: statusOf(progress, courseTasks.length, completed) };
       }).filter(({ course, status }) => course.courseName.toLowerCase().includes(query) && (statusFilter === "all" || status[0] === statusFilter)).sort((a, b) => sort === "name" ? a.course.courseName.localeCompare(b.course.courseName) : sort === "progress-desc" ? b.progress - a.progress : a.progress - b.progress);
