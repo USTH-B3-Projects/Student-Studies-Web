@@ -1,11 +1,11 @@
-# StudyFlow
+# StudentStudies
 
 A web-based study planner that helps students organize courses, manage tasks with deadlines, track progress, and get smart recommendations on what to work on next.
 
 ## Language
 
 **Student**:
-A person who uses StudyFlow to plan their studies. The logged-in entity.
+A person who uses StudentStudies to plan their studies. The logged-in entity.
 _Avoid_: User, account
 
 **Course**:

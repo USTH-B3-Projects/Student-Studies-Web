@@ -1,5 +1,5 @@
-# StudyFlow
-StudyFlow is a smart study planner that helps students manage courses, tasks, deadlines, progress, and task priorities.
+# StudentStudies
+StudentStudies is a smart study planner that helps students manage courses, tasks, deadlines, progress, and task priorities.
 
 ## Main features
 - Authentication
@@ -11,7 +11,7 @@ StudyFlow is a smart study planner that helps students manage courses, tasks, de
 - Workload warning
 
 ## Smart Prioritization
-StudyFlow calculates task priority based on:
+StudentStudies calculates task priority based on:
 - Deadline urgency
 - Importance level
 - Current progress
@@ -20,7 +20,7 @@ StudyFlow calculates task priority based on:
 If estimated duration is not provided, the system uses a default effective duration of 3h for priority calculation.
 
 ## Data Storage
-StudyFlow uses browser `localStorage` for prototype data persistence.
+StudentStudies uses browser `localStorage` for prototype data persistence.
 
 Main stored data:
 - Users
@@ -48,7 +48,7 @@ Setup instructions will be added after the technology stack is finalized.
 
 ## Demo data
 
-While logged in as the demo student, open the browser console on any StudyFlow page and run:
+While logged in as the demo student, open the browser console on any StudentStudies page and run:
 
 ```js
 import("../js/seedDemoData.js").then(({ seedDemoData }) => seedDemoData()).then(console.log)

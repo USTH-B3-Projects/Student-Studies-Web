@@ -1,9 +1,9 @@
-# StudyFlow Data Contract
+# StudentStudies Data Contract
 
 ## 1. Purpose
 
 This document defines the common data structures used by all
-StudyFlow modules.
+StudentStudies modules.
 
 All modules must use the same field names, data types, allowed
 values, and relationships defined in this document.

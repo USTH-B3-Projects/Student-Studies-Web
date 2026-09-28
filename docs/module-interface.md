@@ -1,4 +1,4 @@
-# StudyFlow Module Interface
+# StudentStudies Module Interface
 
 This document defines the public interfaces for the JavaScript service modules. It is the shared contract for implementation and integration. Function names, parameters, return types, and stored fields should not be changed without informing the team.
 
@@ -28,11 +28,11 @@ Authentication commands return an `OperationResult`:
 
 ## `storageService.js`
 
-Provides the common interface for reading and writing StudyFlow data in `localStorage`.
+Provides the common interface for reading and writing StudentStudies data in `localStorage`.
 
 | Function | Parameters | Expected return | Responsibility |
 | --- | --- | --- | --- |
-| `initStorage()` | None | `void` | Initialize missing StudyFlow storage keys with their default values. |
+| `initStorage()` | None | `void` | Initialize missing StudentStudies storage keys with their default values. |
 | `getData(key)` | `key: string` | `any` | Read and parse data stored under a key. |
 | `saveData(key, data)` | `key: string`, `data: any` | `void` | Convert data to JSON and save it under a key. |
 | `removeData(key)` | `key: string` | `void` | Remove data stored under a key. |

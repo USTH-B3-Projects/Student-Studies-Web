@@ -87,7 +87,7 @@ export function calculatePriorityScore(task) {
   const workloadScore = calculateWorkloadScore(remainingWorkload);
 
   const priorityScore =
-    0.5 * urgencyScore + 0.3 * importanceScore + 0.2 * workloadScore;
+    0.6 * urgencyScore + 0.25 * importanceScore + 0.15 * workloadScore;
 
   return Math.round(priorityScore * 10) / 10;
 }
