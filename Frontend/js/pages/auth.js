@@ -1,7 +1,28 @@
 import * as authService from "../services/authService.js";
 import { $, toast } from "../shared/ui.js";
+import { navigate } from "../shared/shell.js";
 
 function wireAuth() {
+  const googleButton = $("#googleLoginBtn");
+  googleButton?.addEventListener("click", async () => {
+    const error = googleButton.closest("form").querySelector(".form-error");
+    error.textContent = "";
+    googleButton.disabled = true;
+    try {
+      const [{ signInWithPopup }, { auth, googleProvider }] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js"),
+        import("../../../server/src/firebase.js"),
+      ]);
+      const { user } = await signInWithPopup(auth, googleProvider);
+      authService.loginWithGoogle(user);
+      navigate("dashboard.html", { replace: true });
+    } catch (firebaseError) {
+      error.textContent = firebaseError.code === "auth/popup-closed-by-user"
+        ? "Google sign-in was cancelled."
+        : "Unable to sign in with Google. Please try again.";
+      googleButton.disabled = false;
+    }
+  });
   document.querySelectorAll("[data-toggle-password]").forEach((button) => {
     const input = document.getElementById(button.dataset.togglePassword);
     const show = () => { input.type = "text"; button.setAttribute("aria-pressed", "true"); };
@@ -43,7 +64,7 @@ function wireAuth() {
         form.querySelector(".form-error").textContent = result.error;
         return;
       }
-      location.replace("dashboard.html");
+      navigate("dashboard.html", { replace: true });
     }),
   );
 }
@@ -71,7 +92,7 @@ function wireAuthTabs() {
 
 export function initAuth() {
   if (authService.getCurrentUser()) {
-    location.replace("dashboard.html");
+    navigate("dashboard.html", { replace: true });
     return;
   }
   wireAuthTabs();

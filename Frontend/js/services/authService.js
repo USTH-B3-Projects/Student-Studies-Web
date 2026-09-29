@@ -49,6 +49,16 @@ export async function login(username, password) {
   }
 }
 
+export function loginWithGoogle(user) {
+  localStorage.setItem(
+    CURRENT_USER_KEY,
+    JSON.stringify({
+      username: user.email || user.uid,
+      studentName: user.displayName || user.email || "Student",
+    })
+  );
+}
+
 /**
  * Reset password for an account.
  * @param {string} username

@@ -254,6 +254,26 @@ body[data-page="landing"] .header-inner {
 .auth-form>.btn span {
   margin-left:10px
 }
+.auth-divider {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--muted);
+  font-size:10px
+}
+.auth-divider:before,.auth-divider:after {
+  content:"";
+  flex:1;
+  border-top:1px solid #edf1f8
+}
+.google-auth-btn {
+  width:100%;
+  background:#fff
+}
+.google-auth-btn:disabled {
+  opacity:.65;
+  cursor:wait
+}
 .auth-foot {
   margin-top:3px;
   padding-top:12px;
