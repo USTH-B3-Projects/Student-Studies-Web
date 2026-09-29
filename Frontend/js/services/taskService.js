@@ -1,6 +1,15 @@
 import * as apiClient from "./storageService.js";
 import { getCurrentUser } from "./authService.js";
 
+export const TASKS_CHANGED_EVENT = "studyflow:tasks-changed";
+
+function publishTaskChanges(tasks) {
+  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function") return;
+  window.dispatchEvent(new CustomEvent(TASKS_CHANGED_EVENT, {
+    detail: { tasks, changedIds: tasks.map((task) => task.taskId) },
+  }));
+}
+
 /**
  * Create a new task.
  * @param {Object} taskData - { courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress }
@@ -127,25 +136,27 @@ export async function updateTaskProgress(taskId, currentProgress) {
   return task;
 }
 
-/**
- * Mark a task as completed.
- * @param {string} taskId
- * @returns {Promise<Object>} Updated task
- */
-export async function markTaskCompleted(taskId) {
-  return updateTaskProgress(taskId, 100);
+async function changeTaskCompletion(taskId, completed) {
+  const user = getCurrentUser();
+  if (!user) throw new Error("Not logged in");
+  return apiClient.patch(`/tasks/${taskId}/completion`, { username: user.username, completed });
 }
 
-/**
- * Toggle task completion through the progress contract.
- * @param {string} taskId
- * @returns {Promise<Object>} Updated task
- */
-export async function toggleTaskCompleted(taskId) {
-  const task = await getTaskById(taskId);
-  if (!task) throw new Error("Task not found");
+export async function setTaskCompletion(taskId, completed) {
+  const task = await changeTaskCompletion(taskId, completed);
+  publishTaskChanges([task]);
+  return task;
+}
 
-  return updateTaskProgress(taskId, Number(task.currentProgress) === 100 ? 0 : 100);
+export async function setTaskCompletions(taskIds, completed) {
+  const results = await Promise.allSettled(taskIds.map((taskId) => changeTaskCompletion(taskId, completed)));
+  const successful = [], failed = [];
+  results.forEach((result, index) => {
+    if (result.status === "fulfilled") successful.push(result.value);
+    else failed.push({ taskId: taskIds[index], error: result.reason });
+  });
+  if (successful.length) publishTaskChanges(successful);
+  return { successful, failed };
 }
 
 /**
@@ -178,5 +189,3 @@ export const list = getTasksByCourseId;
 export const update = updateTask;
 export const remove = deleteTask;
 export const setProgress = updateTaskProgress;
-export const markCompleted = markTaskCompleted;
-export const toggleCompleted = toggleTaskCompleted;

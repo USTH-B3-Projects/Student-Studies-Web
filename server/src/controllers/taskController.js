@@ -17,6 +17,12 @@ function isValidProgress(value) {
   return [0, 25, 50, 75, 100].includes(value);
 }
 
+function normalizeTask(task) {
+  if (!task) return null;
+  const { id, taskName, ...rest } = task;
+  return { taskId: id || task.taskId, taskName, name: taskName || task.name, ...rest };
+}
+
 function calculateUrgencyScore(deadline) {
   const now = new Date();
   const deadlineDate = new Date(deadline);
@@ -80,7 +86,7 @@ function enrichTask(task) {
 }
 
 exports.create = (req, res) => {
-  const { courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress, completed } = req.body;
+  const { courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress = 0 } = req.body;
 
   if (!courseId || !taskName || !deadline) {
     return res.status(400).json({ error: 'courseId, taskName, and deadline are required' });
@@ -100,10 +106,6 @@ exports.create = (req, res) => {
   if (currentProgress !== undefined && !isValidProgress(currentProgress)) {
     return res.status(400).json({ error: 'currentProgress must be: 0, 25, 50, 75, 100' });
   }
-  if (completed !== undefined && typeof completed !== 'boolean') {
-    return res.status(400).json({ error: 'completed must be a boolean' });
-  }
-
   try {
     const course = db.prepare('SELECT * FROM courses WHERE courseId = ?').get(courseId);
     if (!course) {
@@ -114,8 +116,8 @@ exports.create = (req, res) => {
     const createdAt = new Date().toISOString();
 
     db.prepare(`
-      INSERT INTO tasks (id, courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress, completed, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (id, courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress, progressBeforeCompletion, completedAt, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       taskId,
       courseId,
@@ -124,8 +126,9 @@ exports.create = (req, res) => {
       deadline,
       importance || 'medium',
       estimatedDuration || null,
-      currentProgress || 0,
-      completed ? 1 : 0,
+      currentProgress,
+      currentProgress === 100 ? 0 : null,
+      currentProgress === 100 ? createdAt : null,
       createdAt
     );
 
@@ -137,8 +140,9 @@ exports.create = (req, res) => {
       deadline,
       importance: importance || 'medium',
       estimatedDuration: estimatedDuration || null,
-      currentProgress: currentProgress || 0,
-      completed: Boolean(completed),
+      currentProgress,
+      progressBeforeCompletion: currentProgress === 100 ? 0 : null,
+      completedAt: currentProgress === 100 ? createdAt : null,
       createdAt
     };
 
@@ -162,7 +166,8 @@ exports.getAll = (req, res) => {
         t.importance,
         t.estimatedDuration,
         t.currentProgress,
-        t.completed,
+        t.progressBeforeCompletion,
+        t.completedAt,
         t.createdAt
       FROM tasks t
       JOIN courses c ON c.courseId = t.courseId
@@ -195,7 +200,8 @@ exports.getById = (req, res) => {
         t.importance,
         t.estimatedDuration,
         t.currentProgress,
-        t.completed,
+        t.progressBeforeCompletion,
+        t.completedAt,
         t.createdAt
       FROM tasks t
       JOIN courses c ON c.courseId = t.courseId
@@ -214,7 +220,7 @@ exports.getById = (req, res) => {
 
 exports.update = (req, res) => {
   const { id } = req.params;
-  const { taskName, description, deadline, importance, estimatedDuration, currentProgress, completed } = req.body;
+  const { taskName, description, deadline, importance, estimatedDuration, currentProgress } = req.body;
 
   try {
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
@@ -237,13 +243,15 @@ exports.update = (req, res) => {
     if (currentProgress !== undefined && !isValidProgress(currentProgress)) {
       return res.status(400).json({ error: 'currentProgress must be: 0, 25, 50, 75, 100' });
     }
-    if (completed !== undefined && typeof completed !== 'boolean') {
-      return res.status(400).json({ error: 'completed must be a boolean' });
-    }
+    const nextProgress = currentProgress !== undefined ? currentProgress : task.currentProgress;
+    const completing = task.currentProgress < 100 && nextProgress === 100;
+    const reopening = task.currentProgress === 100 && nextProgress < 100;
+    const progressBeforeCompletion = completing ? task.currentProgress : reopening ? null : task.progressBeforeCompletion;
+    const completedAt = completing ? new Date().toISOString() : reopening ? null : task.completedAt;
 
     db.prepare(`
       UPDATE tasks 
-      SET taskName = ?, description = ?, deadline = ?, importance = ?, estimatedDuration = ?, currentProgress = ?, completed = ?
+      SET taskName = ?, description = ?, deadline = ?, importance = ?, estimatedDuration = ?, currentProgress = ?, progressBeforeCompletion = ?, completedAt = ?
       WHERE id = ?
     `).run(
       taskName !== undefined ? taskName.trim() : task.taskName,
@@ -251,12 +259,63 @@ exports.update = (req, res) => {
       deadline !== undefined ? deadline : task.deadline,
       importance !== undefined ? importance : task.importance,
       estimatedDuration !== undefined ? estimatedDuration : task.estimatedDuration,
-      currentProgress !== undefined ? currentProgress : task.currentProgress,
-      completed !== undefined ? Number(Boolean(completed)) : task.completed,
+      nextProgress,
+      progressBeforeCompletion,
+      completedAt,
       id
     );
 
-    res.json({ success: true });
+    res.json(normalizeTask(db.prepare('SELECT * FROM tasks WHERE id = ?').get(id)));
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+exports.setCompletion = (req, res) => {
+  const { id } = req.params;
+  const { username, completed } = req.body;
+
+  if (!username) return res.status(400).json({ error: 'username is required' });
+  if (typeof completed !== 'boolean') return res.status(400).json({ error: 'completed must be a boolean' });
+
+  try {
+    const updateCompletion = db.transaction(() => {
+      const task = db.prepare(`
+        SELECT t.*
+        FROM tasks t
+        JOIN courses c ON c.courseId = t.courseId
+        WHERE t.id = ? AND c.username = ?
+      `).get(id, username);
+      if (!task) return null;
+
+      if (completed && task.currentProgress < 100) {
+        db.prepare(`
+          UPDATE tasks
+          SET progressBeforeCompletion = currentProgress,
+              currentProgress = 100,
+              completedAt = ?
+          WHERE id = ?
+        `).run(new Date().toISOString(), id);
+      } else if (!completed && task.currentProgress === 100) {
+        if (task.progressBeforeCompletion == null) {
+          return { error: 'Previous progress is unavailable; edit the task progress to reopen it safely.' };
+        }
+        db.prepare(`
+          UPDATE tasks
+          SET currentProgress = progressBeforeCompletion,
+              progressBeforeCompletion = NULL,
+              completedAt = NULL
+          WHERE id = ?
+        `).run(id);
+      }
+
+      return enrichTask(normalizeTask(db.prepare('SELECT * FROM tasks WHERE id = ?').get(id)));
+    });
+
+    const task = updateCompletion();
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    if (task.error) return res.status(409).json(task);
+    res.json(task);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -297,7 +356,8 @@ exports.smart = (req, res) => {
         t.importance,
         t.estimatedDuration,
         t.currentProgress,
-        t.completed,
+        t.progressBeforeCompletion,
+        t.completedAt,
         t.createdAt
       FROM tasks t
       JOIN courses c ON c.courseId = t.courseId

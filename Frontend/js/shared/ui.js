@@ -42,12 +42,52 @@ const dueLabel = (d) => {
   if (days === 1) return "Due tomorrow";
   return `Due in ${days} days`;
 };
-const toast = (msg) => {
+const toast = (msg, { actionLabel, onAction, duration = actionLabel ? 6000 : 2600 } = {}) => {
   const e = document.createElement("div");
   e.className = "toast";
-  e.textContent = msg;
+  const text = document.createElement("span");
+  text.textContent = msg;
+  e.append(text);
+  if (actionLabel && onAction) {
+    const action = document.createElement("button");
+    action.type = "button";
+    action.textContent = actionLabel;
+    action.onclick = async () => {
+      clearTimeout(timer);
+      action.disabled = true;
+      try { await onAction(); e.remove(); }
+      catch { action.disabled = false; }
+    };
+    e.append(action);
+  }
   document.body.append(e);
-  setTimeout(() => e.remove(), 2600);
+  const timer = setTimeout(() => e.remove(), duration);
+  return e;
 };
 
-export { $, esc, fmtDate, fmtDateTime, localDateTimeValue, dueLabel, toast };
+const elementFromHTML = (html) => {
+  const template = document.createElement("template");
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild;
+};
+
+const reconcileTaskRows = (container, tasks, renderRow, changedIds = new Set()) => {
+  const wanted = new Set(tasks.map((task) => task.taskId));
+  [...container.querySelectorAll(":scope > [data-task-id]")].forEach((row) => {
+    if (!wanted.has(row.dataset.taskId)) row.remove();
+  });
+  tasks.forEach((task, index) => {
+    const rows = [...container.querySelectorAll(":scope > [data-task-id]")];
+    let row = rows.find((item) => item.dataset.taskId === task.taskId);
+    if (!row || changedIds.has(task.taskId)) {
+      const rendered = renderRow(task);
+      const replacement = typeof rendered === "string" ? elementFromHTML(rendered) : rendered;
+      row?.replaceWith(replacement);
+      row = replacement;
+    }
+    const current = [...container.querySelectorAll(":scope > [data-task-id]")][index];
+    if (current !== row) container.insertBefore(row, current || null);
+  });
+};
+
+export { $, esc, fmtDate, fmtDateTime, localDateTimeValue, dueLabel, toast, reconcileTaskRows };

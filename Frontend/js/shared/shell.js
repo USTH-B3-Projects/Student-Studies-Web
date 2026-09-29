@@ -5,6 +5,18 @@ import * as smartService from "../services/smartService.js";
 import { $, esc, fmtDateTime, toast } from "./ui.js";
 import { taskDetails } from "../components/task-ui.js";
 
+const prefersReducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hasNativePageTransitions = () => /^https?:$/.test(location.protocol) && CSS.supports("selector(:active-view-transition)");
+let activeNotifications = [], activeReadIds = new Set(), activeReadKey = "";
+
+function navigate(url, { replace = false } = {}) {
+  const destination = new URL(url, location.href);
+  const go = () => replace ? location.replace(destination.href) : location.assign(destination.href);
+  if (prefersReducedMotion() || hasNativePageTransitions() || destination.href === location.href) return go();
+  document.body.classList.add("page-leaving");
+  setTimeout(go, 200);
+}
+
 function notificationReadState(notifications, storedIds = []) {
   const items = notifications.map((item) => ({ ...item, id: `${item.taskId}:${item.type}` }));
   const currentIds = new Set(items.map(({ id }) => id));
@@ -23,9 +35,12 @@ async function initNotifications() {
   catch { storedIds = []; }
   if (!Array.isArray(storedIds)) storedIds = [];
   const { items: notifications, readIds } = notificationReadState(generated, storedIds);
+  activeNotifications = notifications;
+  activeReadIds = readIds;
+  activeReadKey = readKey;
   localStorage.setItem(readKey, JSON.stringify([...readIds]));
   const syncBadge = () => {
-    const unread = notifications.filter((item) => !item.read).length;
+    const unread = activeNotifications.filter((item) => !item.read).length;
     badge.textContent = unread ? String(unread) : "";
     badge.hidden = unread === 0;
   };
@@ -51,7 +66,7 @@ async function initNotifications() {
       root.querySelector("[data-view-notification-task]").onclick = () => {
         const url = `course-detail.html?courseId=${encodeURIComponent(task.courseId)}&taskId=${encodeURIComponent(task.taskId)}`;
         close();
-        location.href = url;
+        navigate(url);
       };
       document.addEventListener("keydown", onKeydown);
       root.querySelector("[data-notification-close]").focus();
@@ -75,8 +90,8 @@ async function initNotifications() {
     const opening = !dropdown.classList.contains("open");
     setDropdownOpen(opening);
     if (opening) {
-      notifications.forEach((item) => { item.read = true; readIds.add(item.id); });
-      localStorage.setItem(readKey, JSON.stringify([...readIds]));
+      activeNotifications.forEach((item) => { item.read = true; activeReadIds.add(item.id); });
+      localStorage.setItem(activeReadKey, JSON.stringify([...activeReadIds]));
       syncBadge();
     }
   };
@@ -87,14 +102,14 @@ async function initNotifications() {
     const notification = event.target.closest("[data-notification-index]");
     if (!notification) return;
     setDropdownOpen(false);
-    openNotification(notifications[Number(notification.dataset.notificationIndex)]);
+    openNotification(activeNotifications[Number(notification.dataset.notificationIndex)]);
   };
 }
 
 function initShell() {
   const u = authService.getCurrentUser();
   if (!u) {
-    location.replace("index.html#authCard");
+    navigate("index.html#authCard", { replace: true });
     return null;
   }
   if (document.body.dataset.page === "dashboard") {
@@ -136,20 +151,20 @@ function initShell() {
       .toUpperCase());
   $("#logoutBtn")?.addEventListener("click", () => {
     authService.logout();
-    location.replace("index.html");
+    navigate("index.html", { replace: true });
   });
   addEventListener("pageshow", () => {
-    if (!authService.getCurrentUser()) location.replace("index.html#authCard");
+    if (!authService.getCurrentUser()) navigate("index.html#authCard", { replace: true });
   });
   initNotifications().catch((error) => toast(error.message));
+  addEventListener(taskService.TASKS_CHANGED_EVENT, () => initNotifications().catch((error) => toast(error.message)));
   return u;
 }
 
 function initPageTransitions() {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (prefersReducedMotion()) return;
   const isPageLink = (link) => link.origin === location.origin && /\/(dashboard|course|course-detail|tasks|calendar)\.html$/.test(link.pathname);
-  const hasNativePageTransitions = /^https?:$/.test(location.protocol) && CSS.supports("selector(:active-view-transition)");
-  if (!hasNativePageTransitions) document.documentElement.classList.add("fallback-page-transition");
+  if (!hasNativePageTransitions()) document.documentElement.classList.add("fallback-page-transition");
   document.addEventListener("pointerenter", (event) => {
     const link = event.target.closest?.("a[href]");
     if (link && isPageLink(link)) fetch(link.href, { priority: "low" }).catch(() => {});
@@ -164,12 +179,11 @@ function initPageTransitions() {
     if (courseCard && CSS.supports("view-transition-name: none")) {
       courseCard.style.viewTransitionName = `course-${courseId}`;
     }
-    if (hasNativePageTransitions) return;
+    if (hasNativePageTransitions()) return;
     event.preventDefault();
-    document.body.classList.add("page-leaving");
-    setTimeout(() => location.href = destination.href, 140);
+    navigate(destination.href);
   });
   addEventListener("pageshow", () => document.body.classList.remove("page-leaving"));
 }
 
-export { initShell, initPageTransitions, notificationReadState };
+export { initShell, initPageTransitions, navigate, notificationReadState };

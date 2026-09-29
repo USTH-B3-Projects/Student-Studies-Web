@@ -20,14 +20,13 @@ StudentStudies calculates task priority based on:
 If estimated duration is not provided, the system uses a default effective duration of 3h for priority calculation.
 
 ## Data Storage
-StudentStudies uses browser `localStorage` for prototype data persistence.
+StudentStudies stores students, courses, and tasks in the server SQLite database. Browser `localStorage` is used only for client state such as the current login, theme, notification read state, course view, and calendar sessions.
 
 Main stored data:
-- Users
-- Courses
-- Tasks
-- Current logged-in user
+- Users, courses, and tasks: SQLite
+- Current logged-in user and UI preferences: `localStorage`
 Calculated values: priority score, workload score, overdue status, and workload warning are derived by the system and are not stored directly.
+Task completion is also derived from the single rule `currentProgress === 100`; no independent completion boolean is stored.
 
 ## Project Documents
 - Brief: `docs/studyflow-brief.pdf`

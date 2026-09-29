@@ -101,6 +101,8 @@ Stored Student example:
 | importance | ImportanceLevel | Yes | "medium" | User-selected importance |
 | estimatedDuration | Number or null | No | null | User-estimated duration in hours |
 | currentProgress | Number | Yes | 0 | Current task progress |
+| progressBeforeCompletion | Number or null | No | null | Progress saved only so a completed task can be reopened safely |
+| completedAt | ISO Date String or null | No | null | Completion metadata; never used as the completion source of truth |
 | createdAt | ISO Date String | Yes | Current time | Task creation time |
 
 ### Task Validation
@@ -112,6 +114,8 @@ Stored Student example:
 - `estimatedDuration` must remain null if the user does not provide it.
 - The default value of 2 hours is applied only when calculating remaining workload.
 - `currentProgress` must be one of: 0, 25, 50, 75, 100.
+- A task is completed if and only if `currentProgress === 100`.
+- `progressBeforeCompletion` and `completedAt` are transition metadata, not independent completion state.
 - `taskStatus` is derived from `currentProgress` and `deadline` and is not stored.
 - `displayStatus` is derived from `currentProgress` and `deadline` and is not stored.
 
@@ -285,24 +289,11 @@ are deleted.
 
 Before deleting a task, the system must display a confirmation.
 
-## 12. Local Storage
+## 12. Persistence
 
-| Key | Value Type | Description |
-|---|---|---|
-| studyflow_users | Array<Student> | Registered students |
-| studyflow_courses | Array<Course> | All courses |
-| studyflow_tasks | Array<Task> | All tasks |
-| studyflow_current_user | String or null | username of logged-in student |
+Students, courses, and tasks are persisted by the server in SQLite. Task completion is persisted only through `currentProgress`; there is no independent stored completion boolean.
 
-<!--
-Initial data:
-{ 
-  "studyflow_users": [],
-  "studyflow_courses": [],
-  "studyflow_tasks": [],
-  "studyflow_current_user": null
-}
--->
+Browser `localStorage` is limited to client state such as the current user, theme, notification read state, course view, and calendar sessions.
 
 
 ## 13. Recommended Task View

@@ -1,7 +1,7 @@
 import * as courseService from "../services/courseService.js";
 import * as taskService from "../services/taskService.js";
 import { $, esc, fmtDate, fmtDateTime, localDateTimeValue, dueLabel, toast } from "../shared/ui.js";
-import { modal } from "./modal.js";
+import { modal, showConfirmModal } from "./modal.js";
 
 const checkmark = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -103,6 +103,64 @@ function taskData(formData) {
   data.estimatedDuration = data.estimatedDuration ? Number(data.estimatedDuration) : null;
   return data;
 }
+
+function completeTask(task) {
+  if (Number(task.currentProgress) === 100) return;
+  const name = task.taskName || task.name;
+  showConfirmModal({
+    title: "Mark task as completed?",
+    message: `This task is currently ${task.currentProgress}% complete. Marking it as completed will set its progress to 100%.`,
+    confirmLabel: "Mark complete",
+    onConfirm: async (close) => {
+      try {
+        await taskService.setTaskCompletion(task.taskId, true);
+        close();
+        toast(`${name} completed`, {
+          actionLabel: "Undo",
+          onAction: async () => {
+            try {
+              await taskService.setTaskCompletion(task.taskId, false);
+              toast(`${name} reopened`);
+            } catch (error) { toast(error.message); }
+          },
+        });
+      } catch (error) { toast(error.message); }
+    },
+  });
+}
+
+async function reopenTask(task) {
+  try {
+    await taskService.setTaskCompletion(task.taskId, false);
+    toast(`${task.taskName || task.name} reopened`);
+  } catch (error) { toast(error.message); }
+}
+
+function completeTasks(tasks, onSettled = () => {}) {
+  const incomplete = tasks.filter((task) => Number(task.currentProgress) < 100);
+  if (!incomplete.length) return toast("Selected tasks are already completed");
+  showConfirmModal({
+    title: `Mark ${incomplete.length} ${incomplete.length === 1 ? "task" : "tasks"} as completed?`,
+    message: "Their progress will be set to 100%. You can undo this action afterward.",
+    confirmLabel: "Mark complete",
+    onConfirm: async (close) => {
+      const result = await taskService.setTaskCompletions(incomplete.map((task) => task.taskId), true);
+      close();
+      await onSettled(result);
+      const { successful, failed } = result;
+      const message = failed.length
+        ? `${successful.length} completed; ${failed.length} failed: ${failed[0].error.message}`
+        : `${successful.length} ${successful.length === 1 ? "task" : "tasks"} completed`;
+      toast(message, successful.length ? {
+        actionLabel: "Undo",
+        onAction: async () => {
+          const undo = await taskService.setTaskCompletions(successful.map((task) => task.taskId), false);
+          toast(undo.failed.length ? `${undo.successful.length} reopened; ${undo.failed.length} failed` : "Tasks reopened");
+        },
+      } : undefined);
+    },
+  });
+}
 function taskDetails(t, includeStatus = false) {
   const taskNameField = t.taskName || t.name;
   const status = t.isOverdue
@@ -124,10 +182,7 @@ function taskGroup(task) {
   return label === "Due today" ? "today" : "pending";
 }
 function taskRow(task, course, selectedTaskId, selectedTaskIds = null) {
-  const name = task.taskName || task.name;
-  const importance = task.importance.replace("-", " ");
-  const bulkSelected = selectedTaskIds?.has(task.taskId);
-  return `<article class="card task-row ${task.completionStatus === "completed" ? "completed" : ""} ${selectedTaskId === task.taskId ? "details-open" : ""} ${bulkSelected ? "bulk-selected" : ""}" data-task-id="${task.taskId}" tabindex="0" aria-expanded="${selectedTaskId === task.taskId}"><button class="check ${selectedTaskIds ? (bulkSelected ? "checked" : "") : (task.completionStatus === "completed" ? "checked" : "")}" type="button" ${selectedTaskIds ? `data-select="${task.taskId}" aria-label="Select ${esc(name)}" aria-pressed="${Boolean(bulkSelected)}"` : `data-complete="${task.taskId}" aria-label="Mark ${esc(name)} complete"`}>${selectedTaskIds ? (bulkSelected ? checkmark : "") : (task.completionStatus === "completed" ? checkmark : "")}</button><div class="task-summary"><div class="task-name">${esc(name)}</div><div class="task-sub">${course ? `<span class="task-course">${esc(course.courseName)}</span><i aria-hidden="true">&middot;</i>` : ""}<span>${task.completionStatus === "completed" ? "Completed" : dueLabel(task.deadline)}</span><span class="status ${task.importance}">${esc(importance)}</span><span class="task-progress">${task.currentProgress}%</span></div></div>${task.completionStatus !== "completed" ? `<div class="task-priority"><small>Priority</small><strong class="priority ${task.priorityScore >= 75 ? "high" : ""}">${Math.round(task.priorityScore)}</strong></div>` : ""}<details class="task-menu"><summary aria-label="Task actions">&bull;&bull;&bull;</summary><div><button data-edit="${task.taskId}">Edit task</button><button class="danger" data-delete="${task.taskId}">Delete task</button></div></details><aside class="task-preview"><div class="task-preview-inner"><small>Task details</small><strong>${esc(name)}</strong>${taskDetails(task, true)}</div></aside></article>`;
+  return courseTaskRow(task, selectedTaskId, selectedTaskIds, course);
 }
 function groupedTasks(tasks, courses = [], selectedTaskId = null, selectedTaskIds = null) {
   const groups = [
@@ -138,7 +193,7 @@ function groupedTasks(tasks, courses = [], selectedTaskId = null, selectedTaskId
   ];
   return groups.map(([key, label]) => {
     const items = tasks.filter((task) => taskGroup(task) === key);
-    return items.length ? `<section class="task-group group-${key}"><header><h2>${label}</h2><span>${items.length}</span></header><div>${items.map((task) => taskRow(task, courses.find((course) => course.courseId === task.courseId), selectedTaskId, selectedTaskIds)).join("")}</div></section>` : "";
+    return items.length ? `<section class="task-group group-${key}"><header><h2>${label}</h2><span>${items.length}</span></header><div class="course-task-table">${items.map((task) => taskRow(task, courses.find((course) => course.courseId === task.courseId), selectedTaskId, selectedTaskIds)).join("")}</div></section>` : "";
   }).join("");
 }
 function wireExpandable(selector) {
@@ -252,14 +307,21 @@ async function addTask(onAdded = () => {}) {
   } catch (error) { toast(error.message); }
 }
 
-function courseTaskTable(tasks, selectedTaskId = null, selectedTaskIds = null) {
-  return `<div class="course-task-table">${tasks.map((task) => {
+function courseTaskRow(task, selectedTaskId = null, selectedTaskIds = null, course = null) {
     const name = task.taskName || task.name,
       status = task.completionStatus === "completed" ? ["completed", "Completed"] : task.isOverdue ? ["overdue", "Overdue"] : ["pending", "Pending"],
-      importance = task.importance.replace("-", " ");
+      importance = task.importance.replace("-", " "),
+      remainingMinutes = Math.round(task.remainingWorkload * 60),
+      remaining = remainingMinutes < 60 ? `${remainingMinutes} min` : `${Math.floor(remainingMinutes / 60)}h${remainingMinutes % 60 ? ` ${remainingMinutes % 60} min` : ""}`;
     const bulkSelected = selectedTaskIds?.has(task.taskId);
-    return `<article class="task-row table-task-row ${status[0] === "completed" ? "completed" : ""} ${selectedTaskId === task.taskId ? "details-open" : ""} ${bulkSelected ? "bulk-selected" : ""}" data-task-id="${task.taskId}" tabindex="0" aria-expanded="${selectedTaskId === task.taskId}"><button class="check ${bulkSelected ? "checked" : ""}" type="button" data-select="${task.taskId}" aria-label="Select ${esc(name)}" aria-pressed="${Boolean(bulkSelected)}">${bulkSelected ? checkmark : ""}</button><div class="table-task-name"><strong>${esc(name)}</strong>${task.description ? `<small>${esc(task.description)}</small>` : ""}</div><div class="task-badges"><span class="status ${status[0]}">${status[1]}</span><span class="status ${task.importance}">${esc(importance)}</span>${task.hasWorkloadWarning ? '<span class="workload-warning">! Workload warning</span>' : ""}</div><time datetime="${esc(task.deadline)}" class="task-deadline ${task.isOverdue ? "danger-text" : ""}">${dueLabel(task.deadline)}<small>${fmtDate(task.deadline)}</small></time><div class="table-progress"><strong>${task.currentProgress}%</strong><div class="progress" aria-label="${task.currentProgress}% complete"><span style="width:${task.currentProgress}%"></span></div></div><span class="task-remaining">~${Number(task.remainingWorkload.toFixed(1))}h <small>remaining</small></span>${status[0] !== "completed" ? `<span class="task-score"><small>Priority</small>${Math.round(task.priorityScore)}</span>` : ""}<details class="task-menu"><summary aria-label="Task actions">&bull;&bull;&bull;</summary><div>${status[0] !== "completed" ? `<button type="button" data-complete="${task.taskId}">Mark completed</button>` : ""}<button data-edit="${task.taskId}">Edit task</button><button class="danger" data-delete="${task.taskId}">Delete task</button></div></details><aside class="task-preview"><div class="task-preview-inner"><strong>${esc(name)}</strong>${taskDetails(task, true)}<div class="task-detail-actions">${status[0] !== "completed" ? `<button class="btn btn-primary" type="button" data-complete="${task.taskId}">Mark completed</button>` : ""}<button class="btn btn-outline" data-edit="${task.taskId}">Edit task</button><button class="btn btn-danger" data-delete="${task.taskId}">Delete task</button></div></div></aside></article>`;
-  }).join("")}</div>`;
+    const completionAction = status[0] === "completed"
+      ? `<button type="button" data-reopen="${task.taskId}">Reopen task</button>`
+      : `<button type="button" data-complete="${task.taskId}">Mark complete</button>`;
+    return `<article class="task-row table-task-row ${status[0] === "completed" ? "completed" : ""} ${selectedTaskId === task.taskId ? "details-open" : ""} ${bulkSelected ? "bulk-selected" : ""}" data-task-id="${task.taskId}" tabindex="0" aria-expanded="${selectedTaskId === task.taskId}"><button class="check ${bulkSelected ? "checked" : ""}" type="button" data-select="${task.taskId}" aria-label="Select ${esc(name)}" aria-pressed="${Boolean(bulkSelected)}">${bulkSelected ? checkmark : ""}</button><div class="table-task-name"><strong>${esc(name)}</strong>${task.description ? `<small>${esc(task.description)}</small>` : ""}</div><div class="task-badges"><span class="status ${status[0]}">${status[1]}</span><span class="status ${task.importance}">${esc(importance)}</span></div><time datetime="${esc(task.deadline)}" class="task-deadline ${task.isOverdue ? "danger-text" : ""}">${dueLabel(task.deadline)}<small>${fmtDate(task.deadline)}</small></time><div class="table-progress"><strong>${task.currentProgress}%</strong><div class="progress" aria-label="${task.currentProgress}% complete"><span style="width:${task.currentProgress}%"></span></div></div><span class="task-remaining">~${remaining} <small>remaining</small></span><span class="task-score"><small>Priority</small>${Math.round(task.priorityScore)}</span><details class="task-menu"><summary aria-label="Task actions">&bull;&bull;&bull;</summary><div>${completionAction}<button data-edit="${task.taskId}">Edit task</button><button class="danger" data-delete="${task.taskId}">Delete task</button></div></details><button class="task-toggle" type="button" data-task-toggle aria-label="${selectedTaskId === task.taskId ? "Collapse" : "Expand"} task details" aria-expanded="${selectedTaskId === task.taskId}"><span aria-hidden="true">⌄</span></button><aside class="task-preview"><div class="task-preview-inner"><section class="task-detail-info"><h3>Description</h3><p>${esc(task.description) || "No description provided."}</p><dl><div><dt>Deadline</dt><dd><time datetime="${esc(task.deadline)}">${fmtDateTime(task.deadline)}</time> <span class="status ${status[0]}">${status[1]}</span></dd></div><div><dt>Importance</dt><dd class="importance-label ${task.importance}">${esc(importance)}</dd></div><div><dt>Course</dt><dd>${esc(course?.courseName || "Current course")}</dd></div></dl></section><section class="task-detail-progress"><div class="detail-progress-heading"><span>Progress</span><strong>${task.currentProgress}%</strong></div><div class="progress" aria-label="${task.currentProgress}% complete"><span style="width:${task.currentProgress}%"></span></div><div class="detail-remaining"><span>Remaining workload</span><strong>~${remaining}</strong></div><div class="task-detail-actions"><button class="btn ${status[0] === "completed" ? "btn-outline" : "btn-primary"}" type="button" ${status[0] === "completed" ? `data-reopen="${task.taskId}"` : `data-complete="${task.taskId}"`}>${status[0] === "completed" ? "Reopen task" : "Mark complete"}</button><button class="btn btn-outline" data-edit="${task.taskId}">Edit task</button><button class="btn btn-danger" data-delete="${task.taskId}">Delete task</button></div></section></div></aside></article>`;
+}
+
+function courseTaskTable(tasks, selectedTaskId = null, selectedTaskIds = null, course = null) {
+  return `<div class="course-task-table">${tasks.map((task) => courseTaskRow(task, selectedTaskId, selectedTaskIds, course)).join("")}</div>`;
 }
 
 export {
@@ -267,6 +329,9 @@ export {
   taskFormWithCourse,
   wireTaskCourseSelector,
   taskData,
+  completeTask,
+  completeTasks,
+  reopenTask,
   taskDetails,
   warningList,
   taskGroup,

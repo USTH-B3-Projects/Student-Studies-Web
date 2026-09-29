@@ -1,4 +1,4 @@
-import { $ } from "../shared/ui.js";
+import { $, esc } from "../shared/ui.js";
 
 function modal(title, body, onSubmit) {
   const root = $("#modalRoot");
@@ -244,4 +244,28 @@ function modal(title, body, onSubmit) {
   });
 }
 
-export { modal };
+function showConfirmModal({ title, message, confirmLabel = "Confirm", danger = false, onConfirm }) {
+  const root = $("#modalRoot");
+  const previousFocus = document.activeElement;
+  const background = [...document.body.children].filter((element) => element !== root && element.tagName !== "SCRIPT").map((element) => [element, element.inert]);
+  root.innerHTML = `<div class="modal-backdrop open confirmation-backdrop"><section class="modal card confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="confirmationTitle"><h2 id="confirmationTitle">${esc(title)}</h2><p>${esc(message)}</p><div class="modal-actions"><button class="btn btn-outline" type="button" data-confirm-cancel>Cancel</button><button class="btn ${danger ? "btn-danger" : "btn-primary"}" type="button" data-confirm-action>${esc(confirmLabel)}</button></div></section></div>`;
+  background.forEach(([element]) => { element.inert = true; });
+  const close = () => {
+    root.innerHTML = "";
+    background.forEach(([element, inert]) => { element.inert = inert; });
+    document.removeEventListener("keydown", escape);
+    if (previousFocus?.isConnected) previousFocus.focus();
+  };
+  const escape = (event) => { if (event.key === "Escape") close(); };
+  root.querySelector("[data-confirm-cancel]").onclick = close;
+  const confirm = root.querySelector("[data-confirm-action]");
+  confirm.onclick = async () => {
+    confirm.disabled = true;
+    try { await onConfirm(close); }
+    finally { if (confirm.isConnected) confirm.disabled = false; }
+  };
+  document.addEventListener("keydown", escape);
+  root.querySelector("[data-confirm-cancel]").focus();
+}
+
+export { modal, showConfirmModal };

@@ -230,7 +230,10 @@ button {
   will-change: opacity, transform;
 }
 .fallback-page-transition .page-enter {
-  animation: pageIn 260ms ease-out both;
+  animation: pageIn 380ms cubic-bezier(.2, .8, .2, 1) both;
+}
+.fallback-page-transition body {
+  animation: pageFadeIn 320ms ease-out both;
 }
 @keyframes pageIn {
   from {
@@ -244,21 +247,25 @@ button {
 }
 .page-leaving .page-enter {
   opacity: 0;
-  transform: translate3d(0, -6px, 0);
-  transition: opacity 140ms ease-in, transform 140ms ease-in;
+  transform: translate3d(0, -8px, 0);
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
   pointer-events: none;
+}
+.fallback-page-transition body.page-leaving {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
 }
 @view-transition {
   navigation: auto;
 }
 ::view-transition-old(root) {
-  animation: 180ms ease-in both pageOut;
+  animation: 220ms ease-in both pageOut;
 }
 ::view-transition-new(root) {
-  animation: 260ms ease-out both pageIn;
+  animation: 380ms cubic-bezier(.2, .8, .2, 1) both pageIn;
 }
 ::view-transition-group(*) {
-  animation-duration: 280ms;
+  animation-duration: 380ms;
   animation-timing-function: cubic-bezier(.2, .8, .2, 1);
 }
 @keyframes pageOut {
@@ -267,8 +274,11 @@ button {
     transform: scale(.985);
   }
 }
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .page-enter, .page-leaving .page-enter {
+  body, .page-enter, .page-leaving .page-enter {
     animation: none;
     transition: none;
   }
@@ -396,7 +406,11 @@ input[type="color"] {
   border-radius: 12px;
   z-index: 30;
   animation: pageIn 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
+.toast button { padding: 0; color: #fff; background: transparent; font-weight: 800; text-decoration: underline; }
 [data-theme="dark"] .toast { background: var(--bg-secondary); color: var(--text-primary); }
 .sr-only {
   position: absolute;

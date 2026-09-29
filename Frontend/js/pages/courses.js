@@ -1,7 +1,7 @@
 import * as courseService from "../services/courseService.js";
 import * as taskService from "../services/taskService.js";
 import { $, esc, toast } from "../shared/ui.js";
-import { modal } from "../components/modal.js";
+import { modal, showConfirmModal } from "../components/modal.js";
 import { addCourse, courseForm } from "../components/task-ui.js";
 import { initShell } from "../shared/shell.js";
 
@@ -67,17 +67,22 @@ function initCourseManagement(u) {
           }
         });
       });
-      document.querySelectorAll("[data-delete-course]").forEach((button) => button.onclick = async () => {
-        if (confirm("Delete course and all its tasks?")) {
+      document.querySelectorAll("[data-delete-course]").forEach((button) => button.onclick = () => showConfirmModal({
+        title: "Delete course?",
+        message: "Are you sure you want to delete this course? All tasks belonging to this course will also be deleted.",
+        confirmLabel: "Delete course",
+        danger: true,
+        onConfirm: async (close) => {
           try {
             await courseService.deleteCourse(button.dataset.deleteCourse);
+            close();
             await render(); 
             toast("Course deleted");
           } catch (error) {
             toast(error.message);
           }
-        }
-      });
+        },
+      }));
       $("[data-add-course]")?.addEventListener("click", openAddCourse);
     } catch (error) {
       toast(error.message);
