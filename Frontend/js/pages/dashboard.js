@@ -9,7 +9,7 @@ function initDashboard() {
   const u = initShell();
   if (!u) return;
   const priorityLevel = (score) => score >= 80 ? "critical" : score >= 60 ? "high" : score >= 40 ? "medium" : score >= 20 ? "low" : "minimal";
-  const attentionEmpty = `<div class="mini-empty"><img src="../source/studyflow-mascot-pack/cat-good-job.png" alt=""><strong>You're all caught up.</strong><span>No tasks currently need attention.</span></div>`;
+  const attentionEmpty = `<div class="mini-empty"><strong>You're all caught up.</strong><span>No tasks currently need attention.</span></div>`;
   const upcomingEmpty = `<div class="mini-empty compact"><strong>You're all caught up.</strong><span>No pending tasks.</span></div>`;
   const attentionRow = (task, courses) => {
     const course = courses.find((item) => item.courseId === task.courseId), name = task.taskName || task.name,
