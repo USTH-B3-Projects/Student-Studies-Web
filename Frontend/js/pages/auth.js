@@ -11,7 +11,7 @@ function wireAuth() {
     try {
       const [{ signInWithPopup }, { auth, googleProvider }] = await Promise.all([
         import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js"),
-        import("../../../server/src/firebase.js"),
+        import("../firebase.js"),
       ]);
       const { user } = await signInWithPopup(auth, googleProvider);
       authService.loginWithGoogle(user);
