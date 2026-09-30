@@ -9,7 +9,14 @@
 - Detect tasks that are becoming risky due to high urgency and remaining workload, and notify the student through workload warning notifications.
 - Provide an interactive drag-and-drop calendar that uses each task's estimated duration for a customized study timetable.
 
-## 2. Core Features (3 Standard Features)
+## 2. Core Features (4 Standard Features)
+
+### Authentication – Supporting Functionality
+
+- Registration requires student full name, unique username, password, and password confirmation.
+- Login uses username and password. Password reset requires username, new password, and confirmation.
+- After a successful reset, the old password is replaced by the new password.
+- Logout.
 
 ### 2.1 Course Management (Actor: Student)
 
@@ -20,7 +27,7 @@
 - Assign color (optional)
 - View tasks belonging to each course
 
-### 2.2 Task–Deadline Management (Actor: Student)
+### 2.2 Set deadlines with both date and time (Actor: Student)
 
 - Create, Edit, Delete
 - Set deadlines
@@ -37,12 +44,6 @@
 - Display completed and remaining tasks
 - Show task progress visually
 - Automatically derive and display task status from current progress and deadline. The status is not stored.
-
-### Authentication – Supporting Functionality
-
-- Registration requires student full name, unique username, password, and password confirmation.
-- Login uses username and password. Password reset requires username, new password, and confirmation.
-- After a successful reset, the old password is replaced by the new password.
 
 ### 2.4 Drag and Drop Study Schedule (Actor: Student/ System)
 
@@ -77,18 +78,23 @@ $$
 \text{Priority} = 0.6(\text{Urgency}) + 0.25(\text{Importance}) + 0.15(\text{Workload})
 $$
 
-#### Urgency Score
+### Urgency Score
+Urgency Score is determined by the task’s deadline, which includes both date and time.
 
-Urgency score is based on the time until the user-defined deadline.
+For incomplete tasks, the system first compares the full deadline with the current date and time to determine whether the task is overdue. For non-overdue tasks, urgency is based on the calendar-day difference between the deadline and the current date, using the same local timezone.
 
-| Time until deadline | Urgency Score |
+| Deadline | Urgency Score |
 | --- | ---: |
-| > 7 days | 20 |
-| 4–7 days | 40 |
-| 2–3 days | 60 |
-| 1 day | 80 |
-| Today | 90 |
-| Overdue | 100 |
+| More than 7 calendar days away | 20 |
+| 4–7 calendar days away | 40 |
+| 2–3 calendar days away | 60 |
+| Tomorrow | 80 |
+| Today, with the deadline not yet passed | 90 |
+| Overdue: the deadline date and time have passed | 100 |
+
+Overdue detection takes precedence over the “Today” category. For example, an incomplete task due today at 10:00 is overdue if the current time is 11:00 and therefore receives an Urgency Score of 100.
+
+Completed tasks are excluded from task recommendations and warning lists.
 
 #### Importance Score
 
@@ -170,51 +176,60 @@ Suggested rule:
 
 ### 3.3 Workload Warning & Notification
 
-Workload Warning detects tasks that still have a large amount of work remaining while their deadlines are approaching.
+StudyFlow displays warnings for incomplete tasks that are overdue or have a high remaining workload relative to their approaching deadlines.
 
-Unlike Priority Ranking, which determines what should be done first, Workload Warning identifies tasks that are becoming risky because of the combination of workload and urgency.
+Unlike Priority Ranking, which determines which task should be completed first, warnings highlight tasks that may require the student’s attention.
 
-When a task satisfies the Workload Warning condition, the system displays a warning notification to alert the student.
+The warning list contains two types of warnings:
 
-Notification contains: 
+- **Overdue Warning:** The task’s deadline date and time have passed, but the task is not completed.
+- **Workload Warning:** The task is not overdue, but its urgency and remaining workload meet the warning thresholds.
+
+**Input:** Reuse Smart Task Prioritization data: Deadline, Estimated Duration, and Current Progress.
+
+**System derives:** Overdue Status, Urgency Score, Remaining Workload, and Workload Score.
+
+If Estimated Duration is not provided, the system uses the same 2-hour fallback estimate defined in Smart Task Prioritization.
+
+#### When Is a Warning Shown?
+
+Let **U** represent the Urgency Score and **W** represent the Workload Score.
+
+1. If the task is **completed**, show no warning.
+2. Otherwise, if the task is **overdue**, show an **Overdue Warning**, regardless of its Workload Score.
+3. Otherwise, if `(U >= 80 AND W >= 60) OR (U >= 60 AND W >= 80)`, show a **Workload Warning**.
+4. Otherwise, show no warning.
+
+#### Warning Notifications
+
+When a task meets a warning condition, the system displays an in-app warning notification.
+
+Each notification contains:
+
 - Task name
-- Deadline
+- Deadline, including date and time
 - Remaining workload
 - Warning message
 
-Example:
+**Example — Workload Warning:**
 
-⚠️ Workload Warning
+> ⚠️ Finish DL Lab still requires approximately 5 hours of work and is due tomorrow at 17:00.
 
-Finish DL Lab still requires approximately 5 hours of work and is due tomorrow.
+**Example — Overdue Warning:**
 
-The notification is generated from the existing Workload Warning result and does not require a separate priority calculation.
+> ⚠️ Finish DL Lab was due today at 10:00 and is not yet completed.
 
-**Input:** Reuse Smart Task Prioritization data: Deadline, Estimated Duration, Current Progress.
+Notifications reuse the warning results and do not require a separate priority calculation.
 
-**System gets:** Urgency Score, Remaining Workload, Workload Score.
+#### Warning List Sorting
 
-#### When Is a Workload Warning Shown?
+The warning list includes both overdue tasks and non-overdue tasks that satisfy the Workload Warning condition.
 
-1. If the task is **COMPLETED** → no warning.
-2. Else if the task is **OVERDUE** → show **OVERDUE**.
-4. Else if `(U >= 80 AND W >= 60) OR (U >= 60 AND W >= 80)` → show 
+Tasks are sorted in the following order:
 
-#### Workload Warning Sorting & Tie-Breaking Rule
+1. **Overdue Status first:** Overdue tasks appear before non-overdue tasks with workload warnings.
+2. **Urgency Score DESC:** Within each group, tasks with higher Urgency Scores appear first.
+3. **Workload Score DESC:** If Urgency Scores are equal, tasks with higher Workload Scores appear first.
 
-When multiple tasks satisfy the Workload Warning condition, `getWorkloadWarning(tasks)` sorts the filtered warning list so that the riskiest tasks appear first.
+Completed tasks are excluded from the warning list.
 
-Sorting & tie-breaking rule:
-
-1. **Overdue Status (`isOverdue` first):** Overdue tasks are prioritized at the top (kept as a safeguard for future-proofing, even though active `hasWorkloadWarning` tasks are currently non-overdue).
-2. **Urgency Score DESC (`urgencyScore`):** Tasks with closer deadlines (higher urgency) are ranked higher.
-3. **Workload Score DESC (`workloadScore`):** If two tasks have the same Urgency Score, the task with the larger remaining workload (higher workload score) is shown first.
-
-**Functions:** `calculateRemainingWorkload()`, `calculateWorkloadScore()`, `hasWorkloadWarning()`, `getUserNotifications()`
-
-
-## 4. Future Work for the Mobile App Development Course Version
-
-- **Current Web:** Workload warning notification appears inside StudyFlow.
-- **Future Mobile:** Push notifications/reminders can notify the student even when the application is not currently open.
-- Stronger authentication (using email validation).
