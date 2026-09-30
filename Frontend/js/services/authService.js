@@ -41,7 +41,7 @@ export async function login(username, password) {
     // Store minimal user info in localStorage for session management
     localStorage.setItem(
       CURRENT_USER_KEY,
-      JSON.stringify({ username, studentName: result.user.name })
+      JSON.stringify({ username, studentName: result.user.name, email: result.user.email || "" })
     );
     return { success: true };
   } catch (error) {
@@ -58,7 +58,7 @@ export async function loginWithGoogle(user) {
 
   localStorage.setItem(
     CURRENT_USER_KEY,
-    JSON.stringify({ username, studentName })
+    JSON.stringify({ username, studentName, email: user.email || "" })
   );
 }
 
@@ -89,6 +89,18 @@ export function getCurrentUser() {
   } catch {
     return null;
   }
+}
+
+export function updateCurrentUser({ studentName, email }) {
+  const currentUser = getCurrentUser();
+  const name = studentName?.trim();
+  if (!currentUser || !name) return false;
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({
+    ...currentUser,
+    studentName: name,
+    email: email?.trim() || "",
+  }));
+  return true;
 }
 
 /**

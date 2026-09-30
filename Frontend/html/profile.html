@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Profile - StudyFlow</title>
+  <script>document.documentElement.dataset.theme=localStorage.getItem("studyflow_theme")||"light";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/global.css"><link rel="stylesheet" href="../css/ui/light_dark.css"><link rel="stylesheet" href="../css/dashboard.css"><link rel="stylesheet" href="../css/info-pages.css">
+</head>
+<body data-page="profile">
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="dashboard.html"><img class="brand-logo" src="../source/logo.png" alt="StudyFlow"></a>
+    <nav class="nav nav-links"><a href="dashboard.html">Dashboard</a><a href="course.html">Courses</a><a href="tasks.html">Tasks</a><a href="calendar.html">Calendar</a></nav>
+    <div class="nav-actions user-actions"><label class="ui-switch" title="Switch to dark mode"><input id="themeToggle" type="checkbox" aria-label="Switch to dark mode"><div class="slider"><div class="circle"></div></div></label><span id="userAvatar" class="user-avatar" aria-hidden="true"></span><span id="userName" class="user-name"></span><button id="logoutBtn" class="btn btn-outline" type="button">Log out</button></div>
+  </div></header>
+  <main class="info-main container page-enter">
+    <div class="info-heading"><span class="eyebrow">Your account</span><h1>Profile</h1><p>View and update the basic information shown in StudyFlow.</p></div>
+    <section class="profile-card card" aria-labelledby="profileName">
+      <div id="profileAvatar" class="profile-page-avatar" aria-hidden="true"></div>
+      <div class="profile-summary"><h2 id="profileName"></h2><p id="profileUsername"></p></div>
+      <button id="editProfileBtn" class="btn btn-primary" type="button">Edit Profile</button>
+      <dl class="profile-details"><div><dt>Name</dt><dd id="profileDetailName"><span id="profileNameCopy"></span></dd></div><div><dt>Username</dt><dd id="profileUsernameCopy"></dd></div><div><dt>Email</dt><dd id="profileEmail"></dd></div></dl>
+      <form id="profileForm" class="profile-form" hidden><h3>Edit Profile</h3><div class="form-grid"><label>Name<input name="studentName" required></label><label>Username<input name="username" disabled></label><label>Email<input name="email" type="email" placeholder="Not provided"></label></div><div class="form-actions"><button id="cancelProfileEdit" class="btn btn-outline" type="button">Cancel</button><button class="btn btn-primary" type="submit">Save changes</button></div></form>
+    </section>
+  </main>
+  <div id="modalRoot"></div><script type="module" src="../js/app.js"></script>
+</body>
+</html>

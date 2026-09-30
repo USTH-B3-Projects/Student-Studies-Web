@@ -913,6 +913,8 @@ body[data-page="dashboard"] .pulse-bar {
   grid-row: 1;
 }.upcoming-row time {
   font-weight: 700;
+}@media (min-width: 981px) {
+  .upcoming-head > :nth-child(3), .upcoming-row > :nth-child(3) { transform: translateX(-16px); }
 }.upcoming-priority {
   justify-self: start;
   min-width: 34px;
@@ -927,6 +929,14 @@ body[data-page="dashboard"] .pulse-bar {
 }.upcoming-priority.high {
   color: #b54708;
   background: #ffead5;
+}[data-theme="dark"] .upcoming-priority.critical {
+  color: #fff;
+  background: #d92d3d;
+  box-shadow: 0 0 0 1px #ff7882;
+}[data-theme="dark"] .upcoming-priority.high {
+  color: #ffe8e8;
+  background: #a62935;
+  box-shadow: 0 0 0 1px #ed6670;
 }.upcoming-priority.medium {
   color: #856404;
   background: #fff3bf;
