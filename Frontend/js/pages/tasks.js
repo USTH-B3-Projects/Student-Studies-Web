@@ -17,8 +17,8 @@ function initAllTasks() {
   const user = initShell();
   if (!user) return;
   const requestedStatus = new URLSearchParams(location.search).get("status");
-  let status = ["pending", "overdue", "today", "completed"].includes(requestedStatus) ? requestedStatus : "all", courseId = "all", query = "", sort = "priority", page = 1, selectedTaskId = null, courses = [];
-  const selectedTaskIds = new Set(), bulkActions = $("#bulkActions"), courseAutocomplete = $("#courseAutocomplete"), courseInput = $("#courseFilter"), courseOptions = $("#courseOptions");
+  let status = ["pending", "overdue", "today", "completed"].includes(requestedStatus) ? requestedStatus : "all", courseId = "all", query = "", sort = "priority", page = 1, courses = [];
+  const expandedTaskIds = new Set(), selectedTaskIds = new Set(), bulkActions = $("#bulkActions"), courseAutocomplete = $("#courseAutocomplete"), courseInput = $("#courseFilter"), courseOptions = $("#courseOptions");
   const saveStatus = () => {
     const url = new URL(location.href);
     status === "all" ? url.searchParams.delete("status") : url.searchParams.set("status", status);
@@ -54,27 +54,28 @@ function initAllTasks() {
       courses = await courseService.getCoursesByUserId();
       const raw = await taskService.getTasksByUserId();
       const tasks = raw.map(smartService.enrich);
-      $("#filters").innerHTML = [["all", "All"], ["pending", "Pending"], ["overdue", "Overdue"], ["today", "Today"], ["completed", "Completed"]].map(([value, label]) => `<button class="filter ${status === value ? "active" : ""}" type="button" data-filter="${value}">${label}</button>`).join("");
       courseInput.value = courseId === "all" ? "" : courses.find((course) => course.courseId === courseId)?.courseName || "";
-      let visible = tasks.filter((task) => (status === "all" || taskGroup(task) === status) && (courseId === "all" || task.courseId === courseId) && (task.taskName || task.name).toLowerCase().includes(query));
+      const filtered = tasks.filter((task) => (courseId === "all" || task.courseId === courseId) && (task.taskName || task.name).toLowerCase().includes(query));
+      const counts = { all: filtered.length, pending: 0, overdue: 0, today: 0, completed: 0 };
+      filtered.forEach((task) => counts[taskGroup(task)]++);
+      $("#filters").innerHTML = [["all", "All"], ["pending", "Pending"], ["overdue", "Overdue"], ["today", "Today"], ["completed", "Completed"]].map(([value, label]) => `<button class="filter ${status === value ? "active" : ""}" type="button" data-filter="${value}">${label} (${counts[value]})</button>`).join("");
+      let visible = filtered.filter((task) => status === "all" || taskGroup(task) === status);
       visible.sort((a, b) => sort === "deadline" ? new Date(a.deadline) - new Date(b.deadline) : sort === "importance" ? b.importanceScore - a.importanceScore : b.priorityScore - a.priorityScore);
       const allVisible = visible;
       const pagination = paginateTasks(allVisible, page);
-      if (status === "all") {
-        page = pagination.page;
-        visible = pagination.tasks;
-      }
+      page = pagination.page;
+      visible = pagination.tasks;
       const visibleIds = new Set(allVisible.map((task) => task.taskId));
       selectedTaskIds.forEach((id) => { if (!visibleIds.has(id)) selectedTaskIds.delete(id); });
       bulkActions.hidden = selectedTaskIds.size === 0;
       bulkActions.innerHTML = selectedTaskIds.size ? `<strong><span aria-hidden="true">&#10003;</span> ${selectedTaskIds.size} selected</strong><div><button class="btn btn-outline" type="button" data-select-all>${selectedTaskIds.size === allVisible.length ? "Deselect all" : "Select all"}</button><button class="btn btn-primary" type="button" data-bulk-complete>Complete</button><button class="btn btn-danger" type="button" data-bulk-delete>Delete</button><button class="bulk-clear" type="button" data-clear-selection aria-label="Clear selection">&times;</button></div>` : "";
       $("#taskList").innerHTML = visible.length
         ? status === "all"
-          ? `<div class="course-task-table">${visible.map((task) => taskRow(task, courses.find((course) => course.courseId === task.courseId), selectedTaskId, selectedTaskIds)).join("")}</div>`
-          : groupedTasks(visible, courses, selectedTaskId, selectedTaskIds)
+          ? `<div class="course-task-table">${visible.map((task) => taskRow(task, courses.find((course) => course.courseId === task.courseId), expandedTaskIds, selectedTaskIds)).join("")}</div>`
+          : groupedTasks(visible, courses, expandedTaskIds, selectedTaskIds)
         : `<div class="empty course-empty-state"><h3>No matching tasks</h3><p>Try another filter or create a new task.</p></div>`;
       const paginationNav = $("#taskPagination");
-      paginationNav.hidden = status !== "all" || allVisible.length <= TASKS_PER_PAGE;
+      paginationNav.hidden = allVisible.length <= TASKS_PER_PAGE;
       paginationNav.innerHTML = paginationNav.hidden ? "" : `<button type="button" data-page="${page - 1}" ${page === 1 ? "disabled" : ""}>Previous</button>${Array.from({ length: pagination.pageCount }, (_, index) => `<button type="button" data-page="${index + 1}" ${page === index + 1 ? 'class="active" aria-current="page"' : ""}>${index + 1}</button>`).join("")}<button type="button" data-page="${page + 1}" ${page === pagination.pageCount ? "disabled" : ""}>Next</button>`;
       paginationNav.querySelectorAll("[data-page]").forEach((button) => button.onclick = () => { page = Number(button.dataset.page); render(); });
       document.querySelectorAll("#taskList button:not([type])").forEach((button) => (button.type = "button"));
@@ -119,14 +120,11 @@ function initAllTasks() {
         preview.style.setProperty("--details-height", `${preview.scrollHeight}px`);
         row.onclick = (event) => {
           if (event.target.closest("button, a, details")) return;
-          selectedTaskId = selectedTaskId === row.dataset.taskId ? null : row.dataset.taskId;
-          render();
+          const open = !expandedTaskIds.has(row.dataset.taskId);
+          open ? expandedTaskIds.add(row.dataset.taskId) : expandedTaskIds.delete(row.dataset.taskId);
+          row.classList.toggle("details-open", open);
+          row.setAttribute("aria-expanded", String(open));
         };
-        row.querySelector("[data-task-toggle]")?.addEventListener("click", (event) => {
-          event.stopPropagation();
-          selectedTaskId = selectedTaskId === row.dataset.taskId ? null : row.dataset.taskId;
-          render();
-        });
         row.onkeydown = (event) => {
           if ((event.key === "Enter" || event.key === " ") && event.target === row) {
             event.preventDefault();
