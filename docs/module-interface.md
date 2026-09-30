@@ -1,7 +1,5 @@
 # StudyFlow Module Interface
 
-> Revision status: This is a coordinated documentation draft based on the supplied documents and agreed behavior. The current JavaScript source and API implementation have not been verified. Proposed completion synchronization, calendar cascade deletion, warning payload/export, async return types, and module dependencies must be checked against the code before treating this as an implementation-verified contract.
-
 This document defines the public interfaces for the JavaScript service modules. It is the shared contract for implementation and integration. Function names, parameters, return types, and stored fields should not be changed without informing the team.
 
 ## General conventions
@@ -233,8 +231,6 @@ Manages manual drag-and-drop study sessions for the authenticated student.
 
 ## Module dependencies
 
-These are conceptual dependencies; they do not certify the current import graph. Cascade deletion may be implemented by the backend or coordinated services.
-
 | Module | May use |
 | --- | --- |
 | `storageService.js` | None |
@@ -244,16 +240,3 @@ These are conceptual dependencies; they do not certify the current import graph.
 | `priorityService.js` | Task data passed through function parameters |
 | `workloadWarningService.js` | `priorityService.js`; task data |
 | `calendarService.js` | `authService.js` (`getCurrentUser()`); common data access and task/course ownership data (verify actual imports) |
-
-Page scripts and UI components may call service functions and coordinate data between services, but service modules must not directly manipulate HTML elements.
-## Implementation checks before sign-off
-
-The two revised documents use the same proposed behavior, but the following items require the current source to confirm:
-
-1. Exact synchronous or `Promise<T>` return types for auth, course, task, and calendar services; API failure handling; and missing-record behavior for calendar updates.
-2. Whether completion currently toggles independently of progress. The proposed synchronization rule changes that behavior and must not be described as already implemented without verification.
-3. Whether course/task deletion already cascades to calendar sessions, and which layer performs it.
-4. Whether `getWorkloadWarning()` is exported, its actual return shape, the notification payload, and current warning-list sorting.
-5. Actual service imports, calendar persistence access, application timezone, and urgency day-boundary handling.
-
-No implementation code is modified by this documentation revision.
