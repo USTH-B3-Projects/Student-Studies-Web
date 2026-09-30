@@ -49,13 +49,16 @@ export async function login(username, password) {
   }
 }
 
-export function loginWithGoogle(user) {
+export async function loginWithGoogle(user) {
+  const username = user.email || user.uid;
+  const studentName = user.displayName || user.email || "Student";
+
+  // Sync Google user to the backend database so courses/tasks can reference them
+  await apiClient.post("/auth/google", { username, studentName });
+
   localStorage.setItem(
     CURRENT_USER_KEY,
-    JSON.stringify({
-      username: user.email || user.uid,
-      studentName: user.displayName || user.email || "Student",
-    })
+    JSON.stringify({ username, studentName })
   );
 }
 

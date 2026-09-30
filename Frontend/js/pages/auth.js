@@ -14,7 +14,7 @@ function wireAuth() {
         import("../firebase.js"),
       ]);
       const { user } = await signInWithPopup(auth, googleProvider);
-      authService.loginWithGoogle(user);
+      await authService.loginWithGoogle(user);
       navigate("dashboard.html", { replace: true });
     } catch (firebaseError) {
       error.textContent = firebaseError.code === "auth/popup-closed-by-user"

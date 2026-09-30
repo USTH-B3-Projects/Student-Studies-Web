@@ -1113,6 +1113,66 @@ body[data-page="landing"] {
 .hero-left {
   min-width:0
 }
+
+.auth-panel .auth-form>.google-auth-btn {
+  min-height:3.125rem;
+  padding:0 24px;
+  display:grid;
+  grid-template-columns:48px 1px 1fr;
+  gap:20px;
+  border-color:#cfdaea;
+  border-radius:8px;
+  background:#fff;
+  color:#071943;
+  box-shadow:0 6px 16px rgba(32,91,157,.12);
+  font-size:.9375rem;
+  font-weight:700;
+  transition:transform .2s,box-shadow .2s,background .2s,border-color .2s
+}
+.google-logo {
+  width:32px;
+  height:32px;
+  margin:0;
+  position:relative;
+  justify-self:center;
+  overflow:hidden
+}
+.google-logo img {
+  width:auto;
+  max-width:none;
+  height:32px;
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%)
+}
+.google-divider {
+  width:1px;
+  height:32px;
+  margin:0;
+  background:#dce5f2
+}
+.auth-form>.google-auth-btn .google-auth-text {
+  margin:0
+}
+.auth-panel .auth-form>.google-auth-btn:hover {
+  border-color:#bdcce0;
+  background:#f8fbff;
+  box-shadow:0 10px 24px rgba(32,91,157,.18)
+}
+.auth-panel .auth-form>.google-auth-btn:disabled {
+  transform:none;
+  box-shadow:0 6px 16px rgba(32,91,157,.12)
+}
+@media(max-width:560px) {
+  .auth-panel .auth-form>.google-auth-btn {
+    min-height:40px;
+    padding:0 12px;
+    grid-template-columns:32px 1px 1fr;
+    gap:10px;
+    font-size:13px
+  }
+}
 /* Keep the landing header aligned with the shared dashboard header. */
 
 body[data-page="landing"] .site-header {

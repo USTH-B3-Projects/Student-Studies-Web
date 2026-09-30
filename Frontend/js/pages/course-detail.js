@@ -16,12 +16,11 @@ function initCourseDetail() {
   }
   let filter = "all",
     sort = "priority",
-    query = "",
-    selectedTaskId = params.get("taskId");
-  const selectedTaskIds = new Set(), bulkActions = $("#bulkActions");
+    query = "";
+  const expandedTaskIds = new Set(params.get("taskId") ? [params.get("taskId")] : []), selectedTaskIds = new Set(), bulkActions = $("#bulkActions");
   const courseRowElement = (task, course) => {
     const template = document.createElement("template");
-    template.innerHTML = courseTaskTable([task], selectedTaskId, selectedTaskIds, course);
+    template.innerHTML = courseTaskTable([task], expandedTaskIds, selectedTaskIds, course);
     return template.content.firstElementChild.firstElementChild;
   };
   const render = async (changedIds = null) => {
@@ -83,7 +82,7 @@ function initCourseDetail() {
         if (!list.length) $("#taskList").innerHTML = `<div class="empty"><h3>${filter === "all" ? "No tasks yet" : "No matching tasks"}</h3><p>${filter === "all" ? "Add your first task to start tracking this course." : "Try another filter."}</p></div>`;
       } else {
         $("#taskList").innerHTML = list.length
-          ? courseTaskTable(list, selectedTaskId, selectedTaskIds, course)
+          ? courseTaskTable(list, expandedTaskIds, selectedTaskIds, course)
           : `<div class="empty"><h3>${filter === "all" ? "No tasks yet" : "No matching tasks"}</h3><p>${filter === "all" ? "Add your first task to start tracking this course." : "Try another filter."}</p></div>`;
       }
       document.querySelectorAll("[data-filter]").forEach(
@@ -107,7 +106,7 @@ function initCourseDetail() {
             try {
               await taskService.remove(b.dataset.delete);
               selectedTaskIds.delete(b.dataset.delete);
-              if (selectedTaskId === b.dataset.delete) selectedTaskId = null;
+              expandedTaskIds.delete(b.dataset.delete);
               close();
               await render();
             } catch (error) {
@@ -147,23 +146,11 @@ function initCourseDetail() {
         details.style.setProperty("--details-height", `${details.scrollHeight}px`);
         row.onclick = (event) => {
           if (event.target.closest("button, a, details")) return;
-          const open = selectedTaskId !== row.dataset.taskId;
-          selectedTaskId = open ? row.dataset.taskId : null;
+          const open = !expandedTaskIds.has(row.dataset.taskId);
+          open ? expandedTaskIds.add(row.dataset.taskId) : expandedTaskIds.delete(row.dataset.taskId);
           if (open) details.style.setProperty("--details-height", `${details.scrollHeight}px`);
-          document.querySelectorAll(".task-row.details-open").forEach((item) => {
-            item.classList.remove("details-open");
-            item.setAttribute("aria-expanded", "false");
-          });
           row.classList.toggle("details-open", open);
           row.setAttribute("aria-expanded", String(open));
-          const toggle = row.querySelector("[data-task-toggle]");
-          toggle?.setAttribute("aria-expanded", String(open));
-          toggle?.setAttribute("aria-label", `${open ? "Collapse" : "Expand"} task details`);
-        };
-        const taskToggle = row.querySelector("[data-task-toggle]");
-        if (taskToggle) taskToggle.onclick = (event) => {
-          event.stopPropagation();
-          row.click();
         };
         row.onkeydown = (event) => {
           if ((event.key === "Enter" || event.key === " ") && event.target === row) {

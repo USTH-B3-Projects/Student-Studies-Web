@@ -10,7 +10,7 @@ db.exec(`
     id TEXT PRIMARY KEY,
     studentName TEXT NOT NULL,
     username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
+    password TEXT
   )
 `);
 
@@ -72,6 +72,31 @@ const migrateTaskCompletion = db.transaction(() => {
 });
 
 migrateTaskCompletion();
+
+// Migrate students.password from NOT NULL to nullable (for Google auth)
+// PRAGMA foreign_keys cannot be toggled inside a transaction, so we
+// temporarily disable it around the table-rebuild migration.
+{
+  const passwordCol = db.prepare('PRAGMA table_info(students)').all()
+    .find((col) => col.name === 'password');
+  if (passwordCol && passwordCol.notnull === 1) {
+    db.pragma('foreign_keys = OFF');
+    db.transaction(() => {
+      db.exec(`
+        CREATE TABLE students_new (
+          id TEXT PRIMARY KEY,
+          studentName TEXT NOT NULL,
+          username TEXT UNIQUE NOT NULL,
+          password TEXT
+        )
+      `);
+      db.exec('INSERT INTO students_new SELECT * FROM students');
+      db.exec('DROP TABLE students');
+      db.exec('ALTER TABLE students_new RENAME TO students');
+    })();
+    db.pragma('foreign_keys = ON');
+  }
+}
 
 // Indexes
 db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_course_id ON tasks(courseId)`);

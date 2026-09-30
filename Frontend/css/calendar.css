@@ -220,6 +220,24 @@
 .calendar-day-body.today {
   background-color: color-mix(in srgb, var(--primary) 3%, transparent);
 }
+.calendar-current-time {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 5;
+  border-top: 2px solid var(--danger);
+  pointer-events: none;
+}
+.calendar-current-time span {
+  position: absolute;
+  left: 4px;
+  padding: 2px 5px;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  color: #fff;
+  background: var(--danger);
+  font-size: 10px;
+  font-weight: 800;
+}
 .calendar-drop-indicator {
   position: absolute;
   inset-inline: 6px;
@@ -228,6 +246,10 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--primary) 10%, transparent);
   pointer-events: none;
+}
+.calendar-drop-indicator.deadline-conflict {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 .calendar-deadline-warning {
   position: absolute;

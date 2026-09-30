@@ -24,9 +24,12 @@ const sharedRow = courseMarkup.match(/<article[\s\S]*<\/article>/)?.[0];
 
 assert.ok(sharedRow && tasksMarkup.includes(sharedRow), "Tasks and Course use the same task-row markup");
 assert.match(tasksMarkup, /class="course-task-table"/);
+assert.doesNotMatch(tasksMarkup, /<header><h2>Pending<\/h2><span>/);
 assert.match(tasksMarkup, /class="task-row table-task-row/);
 assert.match(tasksMarkup, /data-select="task-1"/);
-assert.match(tasksMarkup, /data-task-toggle/);
+assert.doesNotMatch(tasksMarkup, /data-task-toggle|task-toggle|⌄/);
+assert.doesNotMatch(tasksMarkup, /<h3>Description<\/h3>/);
+assert.equal((tasksMarkup.match(/Compare validation loss\./g) || []).length, 1);
 
 const completedMarkup = courseTaskTable([{ ...task, currentProgress: 100, completionStatus: "completed", remainingWorkload: 0 }], null, selected, course);
 assert.match(completedMarkup, /data-reopen="task-1"/);
