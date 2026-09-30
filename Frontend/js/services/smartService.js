@@ -87,7 +87,7 @@ export function calculatePriorityScore(task) {
   const workloadScore = calculateWorkloadScore(remainingWorkload);
 
   const priorityScore =
-    0.6 * urgencyScore + 0.25 * importanceScore + 0.15 * workloadScore;
+    0.5 * urgencyScore + 0.3 * importanceScore + 0.2 * workloadScore;
 
   return Math.round(priorityScore * 10) / 10;
 }
@@ -125,7 +125,7 @@ export function enrich(task) {
 }
 
 export function rankTasks(tasks) {
-  const pendingTasks = tasks.map(enrich).filter((task) => task.completionStatus !== "completed");
+  const pendingTasks = tasks.map(enrich).filter((task) => task.currentProgress < 100);
 
   return pendingTasks.sort((taskA, taskB) => {
     const priorityA = calculatePriorityScore(taskA);
@@ -181,34 +181,60 @@ export async function getLocalRecommendations(courseId) {
 
 /**
  * Conditions for a task to trigger an alert:
- *   - Not marked completed
+ *   - Incomplete (currentProgress < 100)
  *   - Not overdue (deadline has not yet passed)
  *   - The user has entered an estimatedDuration (non-null)
  *   - (urgencyScore >= 80 AND workloadScore >= 60) OR (urgencyScore >= 60 AND workloadScore >= 80)
  *
  * Do NOT include overdue tasks here (as there is a separate "overdue" status for them)
  * Skip tasks that lack an estimatedDuration (warnings cannot be calculated, and it is not an error).
- * 
+ *
  * The returned list is SORTED by:
- *   1. isOverdue first (kept for correctness/future-proofing, though tasks with
- *      hasWorkloadWarning = true always have isOverdue = false at this point)
- *   2. urgencyScore descending (closer deadline -> more urgent -> ranked first)
- *   3. workloadScore descending (more work remaining -> ranked first)
+ *   1. urgencyScore descending (closer deadline -> more urgent -> ranked first)
+ *   2. workloadScore descending (more work remaining -> ranked first)
+ *
+ * (No "overdue first" tier here: this list never contains overdue tasks in
+ * the first place, since hasWorkloadWarning requires !isOverdue. For a
+ * combined overdue + workload-warning view, use getRiskOverview() instead.)
  */
 export function getWorkloadWarning(tasks) {
   const warningTasks = tasks.map(enrich).filter((task) => task.hasWorkloadWarning);
 
   return warningTasks.sort((taskA, taskB) => {
+    // 1. urgencyScore descending
+    if (taskA.urgencyScore !== taskB.urgencyScore) {
+      return taskB.urgencyScore - taskA.urgencyScore;
+    }
+
+    // 2. workloadScore descending
+    return taskB.workloadScore - taskA.workloadScore;
+  });
+}
+
+/**
+ * Returns a single combined, sorted list of "at-risk" tasks for the dashboard:
+ * both overdue tasks AND workload-warning tasks together, so the UI does not
+ * need to fetch and concatenate two separate lists itself.
+ *
+ * Sort order: overdue tasks first, then by urgencyScore descending,
+ * then by workloadScore descending.
+ */
+export function getRiskOverview(tasks) {
+  const riskTasks = tasks
+    .map(enrich)
+    .filter((task) => task.isOverdue || task.hasWorkloadWarning);
+
+  return riskTasks.sort((taskA, taskB) => {
     // 1. Overdue first
     if (taskA.isOverdue !== taskB.isOverdue) {
       return taskA.isOverdue ? -1 : 1;
     }
- 
+
     // 2. urgencyScore descending
     if (taskA.urgencyScore !== taskB.urgencyScore) {
       return taskB.urgencyScore - taskA.urgencyScore;
     }
- 
+
     // 3. workloadScore descending
     return taskB.workloadScore - taskA.workloadScore;
   });
@@ -224,10 +250,10 @@ export const recommended_global = getGlobalRecommendations;
 export function getUserNotifications(tasks) {
   return tasks.map(enrich).flatMap((task) => {
     const name = task.taskName || task.name;
-    if (task.isOverdue) return [{ taskId: task.taskId, type: "Overdue Task", title: `🚨 ${name}`, message: "This task is past its deadline." }];
+    if (task.isOverdue) return [{ title: "🚨 Overdue Task", message: `"${name}" is past its deadline. Please complete it ASAP!` }];
     if (!task.hasWorkloadWarning) return [];
     const days = Math.round((new Date(task.deadline).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
     const due = days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
-    return [{ taskId: task.taskId, type: "Workload Warning", title: `⚠️ ${name}`, message: `Requires approximately ${task.remainingWorkload.toFixed(1)} hours of work and is due ${due}.` }];
+    return [{ title: "⚠️ Workload Warning", message: `${name} still requires approximately ${task.remainingWorkload.toFixed(1)} hours of work and is due ${due}.` }];
   });
 }
