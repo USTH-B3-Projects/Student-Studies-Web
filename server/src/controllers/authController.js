@@ -94,3 +94,38 @@ exports.resetPassword = (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+exports.googleSync = (req, res) => {
+  const { username, studentName } = req.body;
+
+  if (!username || !studentName) {
+    return res.status(400).json({ error: 'username and studentName are required' });
+  }
+  if (studentName.trim().length === 0) {
+    return res.status(400).json({ error: 'studentName must not be empty' });
+  }
+
+  try {
+    const existing = db.prepare('SELECT * FROM students WHERE username = ?').get(username);
+    if (existing) {
+      // User already synced — return success with existing data
+      return res.json({
+        success: true,
+        user: { userId: existing.username, name: existing.studentName, email: existing.username }
+      });
+    }
+
+    const id = generateId('student');
+    db.prepare(`
+      INSERT INTO students (id, studentName, username, password)
+      VALUES (?, ?, ?, NULL)
+    `).run(id, studentName.trim(), username);
+
+    res.status(201).json({
+      success: true,
+      user: { userId: username, name: studentName.trim(), email: username }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
