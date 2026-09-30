@@ -47,6 +47,15 @@ export async function put(endpoint, data) {
   return handleResponse(response);
 }
 
+export async function patch(endpoint, data) {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
 export async function del(endpoint) {
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: "DELETE",

@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Course - StudyFlow</title>
+    <title>Course - StudentStudies</title>
     <script>document.documentElement.dataset.theme=localStorage.getItem("studyflow_theme")||"light";</script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -12,16 +12,16 @@
     />
     <link rel="stylesheet" href="../css/global.css" />
     <link rel="stylesheet" href="../css/ui/light_dark.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=2" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=4" />
     <link rel="stylesheet" href="../css/course.css" />
   </head>
   <body data-page="course">
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href="dashboard.html"
-          ><img class="brand-logo" src="../source/logo.png" alt="StudyFlow" /></a
+          ><img class="brand-logo" src="../source/logo.png" alt="StudentStudies" /></a
         >
-        <nav class="nav nav-links"><a href="dashboard.html">Dashboard</a><a class="active" href="course.html">Courses</a><a href="tasks.html">All Tasks</a><a href="calendar.html">Calendar</a></nav>
+        <nav class="nav nav-links"><a href="dashboard.html">Dashboard</a><a class="active" href="course.html">Courses</a><a href="tasks.html">Tasks</a><a href="calendar.html">Calendar</a></nav>
         <div class="nav-actions user-actions">
           <label class="ui-switch" title="Switch to dark mode">
   <input id="themeToggle" type="checkbox" aria-label="Switch to dark mode">
@@ -30,7 +30,7 @@
   </div>
 </label>
           <div class="notification-wrapper" style="position: relative; margin-right: 15px;">
-            <button id="notiBellBtn" class="icon-btn" aria-label="Notifications" style="font-size: 20px; border: none; background: transparent; cursor: pointer;">
+            <button id="notiBellBtn" class="icon-btn" type="button" aria-label="Notifications" style="font-size: 20px; border: none; background: transparent; cursor: pointer;">
               🔔
               <span id="notiBadge" class="noti-badge" hidden>0</span>
             </button>
@@ -41,12 +41,12 @@
           </div>
           <span id="userAvatar" class="user-avatar" aria-hidden="true"></span>
           <span id="userName" class="user-name"></span>
-          <button id="logoutBtn" class="btn btn-outline">Log out</button>
+          <button id="logoutBtn" class="btn btn-outline" type="button">Log out</button>
         </div>
       </div>
     </header>
     <main class="container course-main page-enter"></main>
     <div id="modalRoot"></div>
-    <script type="module" src="../js/app.js?v=4"></script>
+    <script type="module" src="../js/app.js?v=5"></script>
   </body>
 </html>

@@ -1,10 +1,10 @@
-# StudyFlow: A Web-Based Study Planner for Course and Task Management
+# StudentStudies: A Web-Based Study Planner for Course and Task Management
 
 ## 1. Problem Idea
 
 **Overview:** Help students organize courses, manage tasks and deadlines, track study progress, and determine which tasks should be completed first.
 
-**More important factors differentiate StudyFlow from a traditional to-do list:** 
+**More important factors differentiate StudentStudies from a traditional to-do list:** 
 - Define deadline, importance level, estimated duration, and current progress to calculate task priority and recommend what should be done next.
 - Detect tasks that are becoming risky due to high urgency and remaining workload, and notify the student through workload warning notifications.
 - Provide an interactive drag-and-drop calendar that uses each task's estimated duration for a customized study timetable.
@@ -60,7 +60,7 @@
 
 ### 3.1 Smart Task Prioritization
 
-Smart Task Prioritization differentiates StudyFlow from a traditional to-do list app.
+Smart Task Prioritization differentiates StudentStudies from a traditional to-do list app.
 
 | Stage | Data |
 | --- | --- |
@@ -132,7 +132,7 @@ $$
 | Almost done | 75 |
 | Completed | 100 |
 
-**Explanation for the Optional Estimated Duration:** Estimated Duration is optional because users may either enter a custom value, choose from predefined duration options, or leave it unspecified. If no duration is provided, StudyFlow uses a neutral default duration of **2 hours**. This default allows all tasks to use the same Priority formula and remain comparable in both local and global task rankings. The default value is only a fallback estimate and does not represent the actual duration of the task.
+**Explanation for the Optional Estimated Duration:** Estimated Duration is optional because users may either enter a custom value, choose from predefined duration options, or leave it unspecified. If no duration is provided, StudentStudies uses a neutral default duration of **2 hours**. This default allows all tasks to use the same Priority formula and remain comparable in both local and global task rankings. The default value is only a fallback estimate and does not represent the actual duration of the task.
 
 **Future work in the mobile version:** Study timer and actual study duration to provide more accurate workload estimation and reduce reliance on manually estimated duration.
 

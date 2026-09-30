@@ -10,12 +10,13 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
+    'http://127.0.0.1:5500',
     'http://127.0.0.1:5501',
     'https://usth-b3-projects.github.io',
     'http://localhost:5500',
     'http://localhost:5501'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type']
 }));
 app.use(express.json());

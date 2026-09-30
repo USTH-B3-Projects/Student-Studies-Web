@@ -1,0 +1,6 @@
+{
+  "name": "StudentStudies",
+  "dependencies": {
+    "firebase": "^12.19.0"
+  }
+}

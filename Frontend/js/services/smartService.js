@@ -87,7 +87,7 @@ export function calculatePriorityScore(task) {
   const workloadScore = calculateWorkloadScore(remainingWorkload);
 
   const priorityScore =
-    0.5 * urgencyScore + 0.3 * importanceScore + 0.2 * workloadScore;
+    0.6 * urgencyScore + 0.25 * importanceScore + 0.15 * workloadScore;
 
   return Math.round(priorityScore * 10) / 10;
 }
@@ -97,7 +97,7 @@ export function enrich(task) {
   const importanceScore = calculateImportanceScore(task.importance);
   const remainingWorkload = calculateRemainingWorkload(task.estimatedDuration, task.currentProgress);
   const workloadScore = calculateWorkloadScore(remainingWorkload);
-  const completionStatus = Boolean(Number(task.completed)) ? "completed" : "pending";
+  const completionStatus = Number(task.currentProgress) === 100 ? "completed" : "pending";
   const isOverdue = completionStatus !== "completed" && new Date(task.deadline) < new Date();
   const hasWorkloadWarning =
     completionStatus !== "completed" &&

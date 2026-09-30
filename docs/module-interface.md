@@ -1,4 +1,4 @@
-# StudyFlow Module Interface
+# StudentStudies Module Interface
 
 This document defines the public interfaces for the JavaScript service modules. It is the shared contract for implementation and integration. Function names, parameters, return types, and stored fields should not be changed without informing the team.
 
@@ -28,7 +28,7 @@ Authentication commands return an `OperationResult`:
 
 ## `storageService.js`
 
-Provides the common interface for reading and writing StudyFlow data in `localStorage`.
+Provides the common HTTP interface for reading and writing StudentStudies server data.
 
 | Function | Parameters | Expected return | Responsibility |
 | --- | --- | --- | --- |
@@ -93,7 +93,7 @@ Manages task CRUD operations, progress updates, completion, and task queries.
 | `updateTask(taskId, data)` | `taskId: string`, `data: object` | `Task \| null` | Update permitted task fields while preserving `taskId`, `courseId`, and `createdAt`. |
 | `deleteTask(taskId)` | `taskId: string` | `boolean` | Delete the task with the specified ID. |
 | `updateTaskProgress(taskId, currentProgress)` | `taskId: string`, `currentProgress: number` | `Task \| null` | Update `currentProgress` using an allowed progress value. Task status remains derived and is not stored. |
-| `markCompleted(taskId)` | `taskId: string` | `Task \| null` | Mark the task as completed by setting `currentProgress` to `100`. |
+| `setTaskCompletion(taskId, completed)` | `taskId: string`, `completed: boolean` | `Task` | Atomically complete or reopen a task through the dedicated completion endpoint, preserving prior progress for reopen. |
 | `getOverdueTasks(username)` | `username: string` | `Task[]` | Return all incomplete tasks whose deadlines have passed from courses belonging to the specified student. |
 
 ### Task creation input
@@ -111,6 +111,8 @@ The `taskData` object contains:
 The service generates `taskId` and `createdAt`.
 
 Derived values such as `status`, `remainingWorkload`, `urgencyScore`, `importanceScore`, `workloadScore`, `priorityScore`, and workload warnings are not stored in task records.
+
+`currentProgress === 100` is the only definition of completion. `progressBeforeCompletion` and `completedAt` may be stored as transition metadata for Undo/reopen, but they do not define task status.
 
 ## `priorityService.js`
 

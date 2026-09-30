@@ -1,9 +1,9 @@
-# StudyFlow Data Contract
+# StudentStudies Data Contract
 
 ## 1. Purpose
 
 This document defines the common data structures used by all
-StudyFlow modules.
+StudentStudies modules.
 
 All modules must use the same field names, data types, allowed
 values, and relationships defined in this document.
@@ -306,24 +306,11 @@ are deleted.
 
 Before deleting a task, the system must display a confirmation.
 
-## 12. Local Storage
+## 12. Persistence
 
-| Key | Value Type | Description |
-|---|---|---|
-| studyflow_users | Array<Student> | Registered students |
-| studyflow_courses | Array<Course> | All courses |
-| studyflow_tasks | Array<Task> | All tasks |
-| studyflow_current_user | String or null | username of logged-in student |
+Students, courses, and tasks are persisted by the server in SQLite. Task completion is persisted only through `currentProgress`; there is no independent stored completion boolean.
 
-<!--
-Initial data:
-{ 
-  "studyflow_users": [],
-  "studyflow_courses": [],
-  "studyflow_tasks": [],
-  "studyflow_current_user": null
-}
--->
+Browser `localStorage` is limited to client state such as the current user, theme, notification read state, course view, and calendar sessions.
 
 
 ## 13. Recommended Task View

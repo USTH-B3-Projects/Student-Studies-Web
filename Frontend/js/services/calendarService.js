@@ -41,6 +41,17 @@ export function getScheduleByTaskId(taskId) {
   return getSchedules().filter((schedule) => schedule.taskId === taskId);
 }
 
+export function getScheduleSegment(schedule, day) {
+  const dayStart = new Date(day);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  const start = new Date(Math.max(new Date(schedule.startTime), dayStart));
+  const end = new Date(Math.min(new Date(schedule.endTime), dayEnd));
+  if (start >= end) return null;
+  return { start, end, topMinutes: (start - dayStart) / 60000, durationMinutes: (end - start) / 60000 };
+}
+
 export function updateSchedule(sessionId, changes) {
   const schedules = getSchedules();
   const index = schedules.findIndex((schedule) => schedule.sessionId === sessionId);
