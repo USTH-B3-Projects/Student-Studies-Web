@@ -1,7 +1,7 @@
 import * as taskService from "./services/taskService.js";
 import * as courseService from "./services/courseService.js";
 import * as calendarService from "./services/calendarService.js";
-import { enrich } from "./services/smartService.js";
+import { calculateRemainingWorkload, enrich } from "./services/smartService.js";
 
 const START_HOUR = 0;
 const END_HOUR = 24;
@@ -56,9 +56,8 @@ function isInactiveFutureSchedule(schedule, task) {
   return isCompleted(task) && new Date(schedule.endTime) > new Date();
 }
 
-function durationHours(task) {
-  const value = Number(task?.estimatedDuration);
-  return value > 0 ? value : 1;
+export function durationHours(task) {
+  return calculateRemainingWorkload(task?.estimatedDuration, task?.currentProgress);
 }
 
 function renderTasks() {
@@ -113,6 +112,30 @@ function renderTimeline(days) {
   calendar.className = `weekly-calendar ${view === "day" ? "day-calendar" : ""}`;
   calendar.innerHTML = `<div class="calendar-corner">GMT${-new Date().getTimezoneOffset() / 60 >= 0 ? "+" : ""}${-new Date().getTimezoneOffset() / 60}</div>${days.map((day) => `<div class="calendar-day-head ${dateKey(day) === today ? "today" : ""}"><strong>${new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(day)}</strong><span>${day.getDate()}</span></div>`).join("")}<div class="calendar-times">${Array.from({ length: END_HOUR - START_HOUR - 1 }, (_, index) => `<span style="top:${(index + 1) * SLOT_HEIGHT}px">${pad(START_HOUR + index + 1)}:00</span>`).join("")}</div>${days.map((day) => `<div class="calendar-day-body ${dateKey(day) === today ? "today" : ""}" data-calendar-date="${dateKey(day)}">${schedules.map((schedule) => renderEvent(schedule, day)).join("")}</div>`).join("")}`;
   bindEventBlocks();
+  updateCurrentTimeIndicator();
+}
+
+export function currentTimePosition(day, now = new Date()) {
+  const minutes = now.getHours() * 60 + now.getMinutes() - START_HOUR * 60;
+  if (day !== dateKey(now) || minutes < 0 || minutes >= (END_HOUR - START_HOUR) * 60) return null;
+  return { top: minutes * SLOT_HEIGHT / 60, label: `${pad(now.getHours())}:${pad(now.getMinutes())}` };
+}
+
+function updateCurrentTimeIndicator(now = new Date()) {
+  document.querySelectorAll(".calendar-current-time").forEach((element) => element.remove());
+  const day = document.querySelector(`[data-calendar-date="${dateKey(now)}"]`);
+  const position = currentTimePosition(day?.dataset.calendarDate, now);
+  if (!day || !position) return;
+  const indicator = document.createElement("div");
+  indicator.className = "calendar-current-time";
+  indicator.style.top = `${position.top}px`;
+  indicator.innerHTML = `<span>${position.label}</span>`;
+  day.append(indicator);
+}
+
+function startCurrentTimeUpdates() {
+  updateCurrentTimeIndicator();
+  setTimeout(startCurrentTimeUpdates, 60020 - Date.now() % 60000);
 }
 
 function renderMonth() {
@@ -229,13 +252,15 @@ function showDeadlineVisualization() {
 }
 
 function showDropIndicator(event, day) {
-  const { minutes } = dropPosition(event, day);
+  const { start, minutes } = dropPosition(event, day);
+  const end = new Date(start.getTime() + dragDurationMinutes() * 60000);
   let indicator = day.querySelector(".calendar-drop-indicator");
   if (!indicator) {
     indicator = document.createElement("div");
     indicator.className = "calendar-drop-indicator";
     day.append(indicator);
   }
+  indicator.classList.toggle("deadline-conflict", hasDeadlineConflict(draggedTask()?.deadline, end));
   indicator.style.top = `${minutes}px`;
   indicator.style.height = `${Math.max(30, Math.min(dragDurationMinutes(), (END_HOUR - START_HOUR) * 60 - minutes))}px`;
 }
@@ -255,7 +280,7 @@ function saveTaskSchedule(task, start, end) {
   else toast("Task scheduled");
 }
 
-function confirmDeadlineConflict(task, start, end) {
+function confirmDeadlineConflict(task, start, end, save) {
   const root = $("#calendarModalRoot");
   const previousFocus = document.activeElement;
   const background = [$(".site-header"), $(".calendar-page")].filter(Boolean);
@@ -272,11 +297,16 @@ function confirmDeadlineConflict(task, start, end) {
   dialog.querySelector("[data-deadline-cancel]").onclick = close;
   dialog.querySelector("[data-deadline-confirm]").onclick = () => {
     close();
-    try { saveTaskSchedule(task, start, end); }
+    try { save(); }
     catch (error) { toast(error.message); }
   };
   document.addEventListener("keydown", escape);
   dialog.querySelector("[data-deadline-cancel]").focus();
+}
+
+function validateDeadline(task, start, end, save) {
+  if (hasDeadlineConflict(task?.deadline, end)) confirmDeadlineConflict(task, start, end, save);
+  else save();
 }
 
 function handleDrop(event, day) {
@@ -286,14 +316,16 @@ function handleDrop(event, day) {
   const duration = dragDurationMinutes();
   const end = new Date(start.getTime() + duration * 60000);
   try {
+    const task = draggedTask();
     if (dragged.type === "task") {
-      const task = tasks.find((item) => item.taskId === dragged.id);
-      if (hasDeadlineConflict(task?.deadline, end)) confirmDeadlineConflict(task, start, end);
-      else saveTaskSchedule(task, start, end);
+      validateDeadline(task, start, end, () => saveTaskSchedule(task, start, end));
     } else {
-      calendarService.updateSchedule(dragged.id, { startTime: start, endTime: end });
-      renderCalendar();
-      toast("Schedule moved");
+      const sessionId = dragged.id;
+      validateDeadline(task, start, end, () => {
+        calendarService.updateSchedule(sessionId, { startTime: start, endTime: end });
+        renderCalendar();
+        toast("Schedule moved");
+      });
     }
   } catch (error) {
     toast(error.message);
@@ -311,10 +343,14 @@ function handleMonthDrop(event, day) {
   const duration = new Date(schedule.endTime) - oldStart;
   const start = new Date(`${day.dataset.monthDate}T00:00:00`);
   start.setHours(oldStart.getHours(), oldStart.getMinutes(), oldStart.getSeconds(), oldStart.getMilliseconds());
+  const end = new Date(start.getTime() + duration);
   try {
-    calendarService.updateSchedule(schedule.sessionId, { startTime: start, endTime: new Date(start.getTime() + duration) });
-    renderCalendar();
-    toast("Schedule moved");
+    const task = tasks.find((item) => item.taskId === schedule.taskId);
+    validateDeadline(task, start, end, () => {
+      calendarService.updateSchedule(schedule.sessionId, { startTime: start, endTime: end });
+      renderCalendar();
+      toast("Schedule moved");
+    });
   } catch (error) {
     toast(error.message);
   } finally {
@@ -468,6 +504,7 @@ async function init() {
     courses = loadedCourses;
     renderTasks();
     renderCalendar();
+    startCurrentTimeUpdates();
     $("#calendarTaskSearch").oninput = (event) => { query = event.target.value.trim().toLowerCase(); renderTasks(); };
     document.querySelectorAll("[data-calendar-view]").forEach((button) => button.onclick = () => {
       view = button.dataset.calendarView;

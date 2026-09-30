@@ -1,36 +1,24 @@
 import * as courseService from "../services/courseService.js";
 import * as taskService from "../services/taskService.js";
 import * as smartService from "../services/smartService.js";
-import { $, esc, toast, reconcileTaskRows } from "../shared/ui.js";
+import { $, esc, toast } from "../shared/ui.js";
 import { modal, showConfirmModal } from "../components/modal.js";
 import { addTask, completeTask, completeTasks, groupedTasks, reopenTask, taskData, taskForm, taskGroup, taskRow } from "../components/task-ui.js";
 import { initShell } from "../shared/shell.js";
+
+const TASKS_PER_PAGE = 10;
+const paginateTasks = (tasks, requestedPage) => {
+  const pageCount = Math.max(1, Math.ceil(tasks.length / TASKS_PER_PAGE));
+  const page = Math.min(Math.max(1, requestedPage), pageCount);
+  return { page, pageCount, tasks: tasks.slice((page - 1) * TASKS_PER_PAGE, page * TASKS_PER_PAGE) };
+};
 
 function initAllTasks() {
   const user = initShell();
   if (!user) return;
   const requestedStatus = new URLSearchParams(location.search).get("status");
-  let status = ["pending", "overdue", "today", "completed"].includes(requestedStatus) ? requestedStatus : "all", courseId = "all", query = "", sort = "priority", selectedTaskId = null, courses = [];
+  let status = ["pending", "overdue", "today", "completed"].includes(requestedStatus) ? requestedStatus : "all", courseId = "all", query = "", sort = "priority", page = 1, selectedTaskId = null, courses = [];
   const selectedTaskIds = new Set(), bulkActions = $("#bulkActions"), courseAutocomplete = $("#courseAutocomplete"), courseInput = $("#courseFilter"), courseOptions = $("#courseOptions");
-  const reconcileList = (tasks, changedIds) => {
-    const root = $("#taskList"), groups = [["overdue", "Overdue"], ["today", "Today"], ["pending", "Pending"], ["completed", "Completed"]];
-    root.querySelector(".empty")?.remove();
-    groups.forEach(([key, label], groupIndex) => {
-      const items = tasks.filter((task) => taskGroup(task) === key);
-      let section = root.querySelector(`.group-${key}`);
-      if (!items.length) return section?.remove();
-      if (!section) {
-        section = document.createElement("section");
-        section.className = `task-group group-${key}`;
-        section.innerHTML = `<header><h2>${label}</h2><span>0</span></header><div class="course-task-table"></div>`;
-        const next = groups.slice(groupIndex + 1).map(([nextKey]) => root.querySelector(`.group-${nextKey}`)).find(Boolean);
-        root.insertBefore(section, next || null);
-      }
-      section.querySelector("header span").textContent = items.length;
-      reconcileTaskRows(section.querySelector(":scope > div"), items, (task) => taskRow(task, courses.find((course) => course.courseId === task.courseId), selectedTaskId, selectedTaskIds), changedIds);
-    });
-    if (!tasks.length) root.innerHTML = `<div class="empty course-empty-state"><h3>No matching tasks</h3><p>Try another filter or create a new task.</p></div>`;
-  };
   const saveStatus = () => {
     const url = new URL(location.href);
     status === "all" ? url.searchParams.delete("status") : url.searchParams.set("status", status);
@@ -56,11 +44,12 @@ function initAllTasks() {
     const course = courses.find((item) => item.courseId === id);
     if (!course) return;
     courseId = course.courseId;
+    page = 1;
     courseInput.value = course.courseName;
     closeCourseOptions();
     render();
   };
-  const render = async (changedIds = null) => {
+  const render = async () => {
     try {
       courses = await courseService.getCoursesByUserId();
       const raw = await taskService.getTasksByUserId();
@@ -69,14 +58,27 @@ function initAllTasks() {
       courseInput.value = courseId === "all" ? "" : courses.find((course) => course.courseId === courseId)?.courseName || "";
       let visible = tasks.filter((task) => (status === "all" || taskGroup(task) === status) && (courseId === "all" || task.courseId === courseId) && (task.taskName || task.name).toLowerCase().includes(query));
       visible.sort((a, b) => sort === "deadline" ? new Date(a.deadline) - new Date(b.deadline) : sort === "importance" ? b.importanceScore - a.importanceScore : b.priorityScore - a.priorityScore);
-      const visibleIds = new Set(visible.map((task) => task.taskId));
+      const allVisible = visible;
+      const pagination = paginateTasks(allVisible, page);
+      if (status === "all") {
+        page = pagination.page;
+        visible = pagination.tasks;
+      }
+      const visibleIds = new Set(allVisible.map((task) => task.taskId));
       selectedTaskIds.forEach((id) => { if (!visibleIds.has(id)) selectedTaskIds.delete(id); });
       bulkActions.hidden = selectedTaskIds.size === 0;
-      bulkActions.innerHTML = selectedTaskIds.size ? `<strong><span aria-hidden="true">&#10003;</span> ${selectedTaskIds.size} selected</strong><div><button class="btn btn-outline" type="button" data-select-all>${selectedTaskIds.size === visible.length ? "Deselect all" : "Select all"}</button><button class="btn btn-primary" type="button" data-bulk-complete>Complete</button><button class="btn btn-danger" type="button" data-bulk-delete>Delete</button><button class="bulk-clear" type="button" data-clear-selection aria-label="Clear selection">&times;</button></div>` : "";
-      if (changedIds) reconcileList(visible, changedIds);
-      else $("#taskList").innerHTML = visible.length ? groupedTasks(visible, courses, selectedTaskId, selectedTaskIds) : `<div class="empty course-empty-state"><h3>No matching tasks</h3><p>Try another filter or create a new task.</p></div>`;
+      bulkActions.innerHTML = selectedTaskIds.size ? `<strong><span aria-hidden="true">&#10003;</span> ${selectedTaskIds.size} selected</strong><div><button class="btn btn-outline" type="button" data-select-all>${selectedTaskIds.size === allVisible.length ? "Deselect all" : "Select all"}</button><button class="btn btn-primary" type="button" data-bulk-complete>Complete</button><button class="btn btn-danger" type="button" data-bulk-delete>Delete</button><button class="bulk-clear" type="button" data-clear-selection aria-label="Clear selection">&times;</button></div>` : "";
+      $("#taskList").innerHTML = visible.length
+        ? status === "all"
+          ? `<div class="course-task-table">${visible.map((task) => taskRow(task, courses.find((course) => course.courseId === task.courseId), selectedTaskId, selectedTaskIds)).join("")}</div>`
+          : groupedTasks(visible, courses, selectedTaskId, selectedTaskIds)
+        : `<div class="empty course-empty-state"><h3>No matching tasks</h3><p>Try another filter or create a new task.</p></div>`;
+      const paginationNav = $("#taskPagination");
+      paginationNav.hidden = status !== "all" || allVisible.length <= TASKS_PER_PAGE;
+      paginationNav.innerHTML = paginationNav.hidden ? "" : `<button type="button" data-page="${page - 1}" ${page === 1 ? "disabled" : ""}>Previous</button>${Array.from({ length: pagination.pageCount }, (_, index) => `<button type="button" data-page="${index + 1}" ${page === index + 1 ? 'class="active" aria-current="page"' : ""}>${index + 1}</button>`).join("")}<button type="button" data-page="${page + 1}" ${page === pagination.pageCount ? "disabled" : ""}>Next</button>`;
+      paginationNav.querySelectorAll("[data-page]").forEach((button) => button.onclick = () => { page = Number(button.dataset.page); render(); });
       document.querySelectorAll("#taskList button:not([type])").forEach((button) => (button.type = "button"));
-      document.querySelectorAll("[data-filter]").forEach((button) => button.onclick = () => { status = button.dataset.filter; saveStatus(); render(); });
+      document.querySelectorAll("[data-filter]").forEach((button) => button.onclick = () => { status = button.dataset.filter; page = 1; saveStatus(); render(); });
       document.querySelectorAll("[data-complete]").forEach((button) => button.onclick = async (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -99,13 +101,13 @@ function initAllTasks() {
         modal("Edit task", taskForm(task), async (data, close) => { try { await taskService.update(task.taskId, taskData(data)); close(); render(); } catch (error) { toast(error.message); } });
       });
       document.querySelectorAll("[data-delete]").forEach((button) => button.onclick = () => showConfirmModal({ title: "Delete task?", message: "Are you sure you want to delete this task?", confirmLabel: "Delete task", danger: true, onConfirm: async (close) => { try { selectedTaskIds.delete(button.dataset.delete); await taskService.remove(button.dataset.delete); close(); render(); } catch (error) { toast(error.message); } } }));
-      bulkActions.querySelector("[data-select-all]")?.addEventListener("click", () => { const allSelected = visible.every((task) => selectedTaskIds.has(task.taskId)); visible.forEach((task) => allSelected ? selectedTaskIds.delete(task.taskId) : selectedTaskIds.add(task.taskId)); render(); });
+      bulkActions.querySelector("[data-select-all]")?.addEventListener("click", () => { const allSelected = allVisible.every((task) => selectedTaskIds.has(task.taskId)); allVisible.forEach((task) => allSelected ? selectedTaskIds.delete(task.taskId) : selectedTaskIds.add(task.taskId)); render(); });
       bulkActions.querySelector("[data-clear-selection]")?.addEventListener("click", () => { selectedTaskIds.clear(); render(); });
       bulkActions.querySelector("[data-bulk-complete]")?.addEventListener("click", () => completeTasks(
         [...selectedTaskIds].map((id) => tasks.find((task) => task.taskId === id)).filter(Boolean),
         async ({ successful, failed }) => {
           successful.forEach((task) => selectedTaskIds.delete(task.taskId));
-          await render(new Set([...successful.map((task) => task.taskId), ...failed.map(({ taskId }) => taskId)]));
+          await render();
         },
       ));
       bulkActions.querySelector("[data-bulk-delete]")?.addEventListener("click", () => {
@@ -136,13 +138,13 @@ function initAllTasks() {
       $("#sortSelect").value = sort;
     } catch (error) { toast(error.message); }
   };
-  $("#taskSearch").oninput = (event) => { query = event.target.value.trim().toLowerCase(); render(); };
+  $("#taskSearch").oninput = (event) => { query = event.target.value.trim().toLowerCase(); page = 1; render(); };
   courseInput.oninput = (event) => {
     const value = event.target.value.trim();
     const course = courses.find((item) => item.courseName.toLowerCase() === value.toLowerCase());
     showCourseOptions();
-    if (!value) { courseId = "all"; render(); }
-    else if (course) { courseId = course.courseId; closeCourseOptions(); render(); }
+    if (!value) { courseId = "all"; page = 1; render(); }
+    else if (course) { courseId = course.courseId; page = 1; closeCourseOptions(); render(); }
   };
   courseInput.onfocus = () => showCourseOptions();
   courseInput.onblur = () => setTimeout(() => {
@@ -175,10 +177,10 @@ function initAllTasks() {
     courseInput.setAttribute("aria-activedescendant", next.id);
   };
   document.addEventListener("mousedown", (event) => { if (!courseAutocomplete.contains(event.target)) closeCourseOptions(); });
-  $("#sortSelect").onchange = (event) => { sort = event.target.value; render(); };
+  $("#sortSelect").onchange = (event) => { sort = event.target.value; page = 1; render(); };
   $("#addTaskBtn").onclick = () => addTask(render);
-  addEventListener(taskService.TASKS_CHANGED_EVENT, (event) => render(new Set(event.detail.changedIds)));
+  addEventListener(taskService.TASKS_CHANGED_EVENT, render);
   render();
 }
 
-export { initAllTasks };
+export { initAllTasks, paginateTasks };
