@@ -64,7 +64,7 @@ Backend services are plain functions operating on values, without request/respon
 The current runtime priority formula is:
 
 ```text
-priority = 0.5 * urgency + 0.3 * importance + 0.2 * workload
+priority = 0.6 * urgency + 0.25 * importance + 0.15 * workload
 ```
 
 The browser smart rules live in `FE/services/smartService.js`. Existing API rules live in `BE/services/taskService.js`. They deliberately remain separate: browser urgency uses local calendar days and excludes overdue workload warnings, while API urgency uses elapsed 24-hour periods and includes overdue warnings when an estimate exists. API tie-breaking and browser rounding also differ. Unifying these behaviors was explicitly deferred during the refactor. Historical documents describe different weights and fields; they are not a reason to silently change running behavior.
