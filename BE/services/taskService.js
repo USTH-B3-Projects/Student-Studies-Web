@@ -54,7 +54,7 @@ function enrichTask(task) {
   const effectiveDuration = task.estimatedDuration ?? 2;
   const remainingWorkload = effectiveDuration * (1 - task.currentProgress / 100);
   const workloadScore = calculateWorkloadScore(remainingWorkload);
-  const priorityScore = 0.5 * urgencyScore + 0.3 * importanceScore + 0.2 * workloadScore;
+  const priorityScore = 0.6 * urgencyScore + 0.25 * importanceScore + 0.15 * workloadScore;
 
   const now = new Date();
   const deadlineDate = new Date(task.deadline);
