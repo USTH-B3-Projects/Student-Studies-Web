@@ -20,6 +20,10 @@ yarn.lock
 *.sqlite
 *.sqlite3
 
+# Preserve the existing versioned backend database and dependency lock after relocation.
+!BE/data.db
+!BE/package-lock.json
+
 # IDE & Editor
 .vscode/
 .idea/

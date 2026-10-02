@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>About - StudyFlow</title>
+  <script>document.documentElement.dataset.theme=localStorage.getItem("studyflow_theme")||"light";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/global.css"><link rel="stylesheet" href="../css/ui/light_dark.css"><link rel="stylesheet" href="../css/dashboard.css"><link rel="stylesheet" href="../css/info-pages.css">
+</head>
+<body data-page="about">
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="dashboard.html"><img class="brand-logo" src="../assets/logo.png" alt="StudyFlow"></a>
+    <nav class="nav nav-links"><a href="dashboard.html">Dashboard</a><a href="course.html">Courses</a><a href="tasks.html">Tasks</a><a href="calendar.html">Calendar</a></nav>
+    <div class="nav-actions user-actions"><label class="ui-switch" title="Switch to dark mode"><input id="themeToggle" type="checkbox" aria-label="Switch to dark mode"><div class="slider"><div class="circle"></div></div></label><span id="userAvatar" class="user-avatar" aria-hidden="true"></span><span id="userName" class="user-name"></span><button id="logoutBtn" class="btn btn-outline" type="button">Log out</button></div>
+  </div></header>
+  <main class="info-main container page-enter">
+    <div class="info-heading"><span class="eyebrow">Learn more</span><h1>About StudyFlow</h1><p>StudyFlow helps students organize study tasks, plan their time, and understand their learning progress in one clear workspace.</p></div>
+    <section class="about-card card" aria-labelledby="featuresTitle"><h2 id="featuresTitle">Main features</h2><p>The essentials for keeping study work visible and manageable.</p><div class="feature-grid">
+      <article class="feature-item"><h3>Course management</h3><p>Keep subjects and related work organized.</p></article><article class="feature-item"><h3>Task management</h3><p>Track assignments, deadlines, and completion.</p></article><article class="feature-item"><h3>Study planning</h3><p>Schedule focused work around upcoming deadlines.</p></article><article class="feature-item"><h3>Progress tracking</h3><p>See how tasks and courses are moving forward.</p></article><article class="feature-item"><h3>Smart prioritization</h3><p>Use urgency, importance, workload, and progress to surface what needs attention next.</p></article>
+    </div></section>
+    <section class="project-card card"><h2>About the project</h2><p>StudyFlow is a student-focused study planner built to make day-to-day academic work easier to understand and manage.</p></section>
+  </main>
+  <div id="modalRoot"></div><script type="module" src="../app.js"></script>
+</body>
+</html>

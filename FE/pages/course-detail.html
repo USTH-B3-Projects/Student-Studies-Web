@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Course Detail - StudentStudies</title>
+    <script>document.documentElement.dataset.theme=localStorage.getItem("studyflow_theme")||"light";</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/global.css" />
+    <link rel="stylesheet" href="../css/ui/light_dark.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=4" />
+    <link rel="stylesheet" href="../css/course.css" />
+  </head>
+  <body data-page="course-detail">
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="dashboard.html"><img class="brand-logo" src="../assets/logo.png" alt="StudentStudies" /></a>
+        <nav class="nav nav-links"><a href="dashboard.html">Dashboard</a><a class="active" href="course.html">Courses</a><a href="tasks.html">Tasks</a><a href="calendar.html">Calendar</a></nav>
+        <div class="nav-actions user-actions">
+          <label class="ui-switch" title="Switch to dark mode">
+  <input id="themeToggle" type="checkbox" aria-label="Switch to dark mode">
+  <div class="slider">
+    <div class="circle"></div>
+  </div>
+</label>
+          <span id="userAvatar" class="user-avatar" aria-hidden="true"></span><span id="userName" class="user-name"></span><button id="logoutBtn" class="btn btn-outline" type="button">Log out</button>
+        </div>
+      </div>
+    </header>
+    <main class="container course-main page-enter">
+      <a class="back-link" href="course.html">&larr; My courses</a>
+      <section id="courseHero"></section>
+      <section id="courseRecommended"></section>
+      <section class="task-section" aria-labelledby="tasksTitle">
+        <section class="task-toolbar">
+          <h2 id="tasksTitle">Tasks <span id="taskCount"></span></h2>
+          <button id="addTaskBtn" class="btn btn-primary" type="button">+ Add task</button>
+          <div id="filters" class="filters" aria-label="Filter tasks"></div>
+          <div class="toolbar-actions"><label class="task-search"><span aria-hidden="true">&#9906;</span><span class="sr-only">Search tasks</span><input id="taskSearch" class="input" type="search" placeholder="Search tasks..."></label><select id="sortSelect" class="select" aria-label="Sort tasks"><option value="priority">Sort: Priority</option><option value="deadline">Sort: Deadline</option><option value="importance">Sort: Importance</option><option value="createdAt">Sort: Created</option></select></div>
+        </section>
+        <section id="bulkActions" class="bulk-actions" aria-live="polite" hidden></section>
+        <section id="taskList" class="task-list"></section>
+      </section>
+    </main>
+    <div id="modalRoot"></div>
+    <script type="module" src="../app.js?v=6"></script>
+  </body>
+</html>
