@@ -2,5 +2,11 @@
   "name": "StudentStudies",
   "dependencies": {
     "firebase": "^12.19.0"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "npm start --prefix server",
+    "dev": "npm run dev --prefix server",
+    "test": "node --test"
   }
 }

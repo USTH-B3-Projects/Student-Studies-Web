@@ -2,18 +2,19 @@
   <tr>
     <td align="center" bgcolor="#0D1117">
       <br>
-      <img src="./Frontend/source/logo.png" alt="StudyFlow" width="200">
-      <h1><font color="#FFFFFF">StudyFlow</font></h1>
+      <img src="./Frontend/source/logo.png" alt="Student Studies" width="200">
+
+      <h1><font color="#FFFFFF">Student Studies</font></h1>
       <p><strong><font color="#A5B4FC">SMART STUDY PLANNER</font></strong></p>
       <hr>
       <p><font color="#D1D5DB">A web-based study planner that helps students organize courses, manage tasks and deadlines, schedule study sessions, track progress, and know what to work on next.</font></p>
       <p>
         <img src="https://img.shields.io/badge/JavaScript-ES%20Modules-F7DF1E?style=flat-square&logo=javascript&logoColor=111827" alt="JavaScript ES Modules">
-        <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 18+">
+        <img src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 22+">
         <img src="https://img.shields.io/badge/Express-5.2.1-7C3AED?style=flat-square&logo=express&logoColor=white" alt="Express 5.2.1">
         <img src="https://img.shields.io/badge/SQLite-better--sqlite3-2563EB?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite with better-sqlite3">
         <img src="https://img.shields.io/badge/Firebase_Auth-12.19.0-FFCA28?style=flat-square&logo=firebase&logoColor=111827" alt="Firebase Auth 12.19.0">
-        <img src="https://img.shields.io/badge/tests-2%20passed-22C55E?style=flat-square" alt="tests 2 passed">
+        <img src="https://img.shields.io/badge/tests-8%20passed-22C55E?style=flat-square" alt="tests 8 passed">
       </p>
       <br>
     </td>
@@ -22,7 +23,7 @@
 
 ## Overview
 
-StudyFlow brings a student's courses, deadlines, workload, and progress into one workspace. It is designed for students who need more guidance than a traditional to-do list provides: tasks are ranked from their urgency, importance, estimated workload, and current progress so that the most useful next action is visible.
+Student Studies brings a student's courses, deadlines, workload, and progress into one workspace. It is designed for students who need more guidance than a traditional to-do list provides: tasks are ranked from their urgency, importance, estimated workload, and current progress so that the most useful next action is visible.
 
 The project combines a browser-based interface with a REST API and SQLite database. Accounts, courses, and tasks are stored by the backend, while per-user calendar sessions and interface preferences are stored in the browser.
 
@@ -31,9 +32,9 @@ The project combines a browser-based interface with a REST API and SQLite databa
 ### Authentication and account experience
 
 - Register, log in, log out, and reset a password with username/password authentication.
-- Sign in with Google through Firebase Authentication and sync the account to the backend.
+- Sign in with Google through Firebase Authentication.
 - Protect application pages with a client-side session check.
-- View a profile and update the locally displayed name and email.
+- View a profile and save name and email updates to the backend.
 
 ### Dashboard
 
@@ -87,7 +88,7 @@ If no duration is supplied, ranking uses a two-hour effective duration without c
 ### Interface and persistence
 
 - Use responsive light and dark themes with the selected theme retained locally.
-- Retain the signed-in user, notification read state, course view preference, and per-user calendar sessions in `localStorage`.
+- Use a server-validated HttpOnly cookie session; retain notification read state, course view preference, and per-user calendar sessions in `localStorage`.
 - Persist students, courses, and tasks in SQLite through the REST API.
 
 ## Application Workflow
@@ -123,7 +124,7 @@ Monitor dashboard summaries and upcoming work
 
 ## Project Architecture
 
-StudyFlow uses a layered, multi-page frontend and a small REST backend. Page modules coordinate the UI, reusable components render shared interactions, service modules handle data access and calculations, Express controllers implement API behavior, and SQLite provides server-side persistence.
+Student Studies uses a layered, multi-page frontend and a small REST backend. Page modules coordinate the UI, reusable components render shared interactions, service modules handle data access and calculations, Express controllers implement API behavior, and SQLite provides server-side persistence.
 
 ```text
 Web-Application-Development/
@@ -134,7 +135,7 @@ Web-Application-Development/
 │   ├── CONTEXT.md                  # Domain terminology
 │   ├── data-contract.md            # Shared data model
 │   ├── module-interface.md         # Service interface documentation
-│   ├── studyflow-brief.md          # Product and feature brief
+│   ├── Student Studies-brief.md          # Product and feature brief
 │   ├── ClassDiagram.drawio.png
 │   ├── UseCaseDiagram.png
 │   └── WorkFlow.drawio.png
@@ -177,12 +178,12 @@ HTML page → page controller → frontend service → REST API → Express cont
 | Student accounts | SQLite `students` table |
 | Courses | SQLite `courses` table |
 | Tasks and completion history | SQLite `tasks` table |
-| Current browser session | `localStorage` |
+| Current browser session | HttpOnly cookie and SQLite `auth_sessions` table |
 | Calendar study sessions | Per-user `localStorage` key |
 | Theme, course view, and notification read state | `localStorage` |
 | Priority, status, remaining workload, and warnings | Calculated at runtime |
 
-The database is created automatically at `server/data.db` when the backend starts from the `server` package. Set `STUDYFLOW_DB_PATH` to use another location.
+The database is created automatically at `server/data.db`, regardless of the working directory. Set `STUDYFLOW_DB_PATH` to use another location.
 
 ## REST API
 
@@ -193,7 +194,6 @@ All backend routes are mounted below `/api/v1`.
 | `GET` | `/health` | Check API availability |
 | `POST` | `/auth/register` | Register a student |
 | `POST` | `/auth/login` | Validate username/password credentials |
-| `POST` | `/auth/google` | Create or update a Google-authenticated student |
 | `POST` | `/auth/reset` | Reset a password |
 | `GET`, `POST` | `/courses` | List or create courses |
 | `GET`, `PUT`, `DELETE` | `/courses/:id` | Read, update, or delete a course |
@@ -206,7 +206,7 @@ All backend routes are mounted below `/api/v1`.
 
 ### Prerequisites
 
-- Node.js 18 or newer
+- Node.js 22 or newer
 - npm
 - A static development server, such as the VS Code Live Server extension configured for port `5501`
 
@@ -244,13 +244,21 @@ The frontend automatically uses `http://localhost:5000/api/v1` on `localhost` an
 
 ## Testing
 
-Run the existing frontend checks from the repository root:
+Run all frontend and backend checks from the repository root:
 
 ```bash
-node --test Frontend/js/*.test.mjs Frontend/js/components/*.test.mjs Frontend/js/pages/*.test.mjs Frontend/js/services/*.test.mjs Frontend/js/shared/*.test.mjs
+npm test
 ```
 
-The current checks cover Google-session synchronization, local profile updates, and profile-menu state.
+Checks cover session restoration before calendar initialization, API errors, calendar calculations and persistence, profile menu state, authenticated profile updates, course/task CRUD, validation, ownership, completion history, and migration without losing account fields. Tests use temporary databases.
+
+### Module responsibilities
+
+- `app.js` restores the session before initializing the selected page, including calendar.
+- `pages/` coordinates each page; `components/` contains reusable UI.
+- `shared/shell.js` handles navigation, theme and the user menu; `shared/notifications.js` handles notifications; `shared/calendar-time.js` contains calendar calculations.
+- `services/storageService.js` provides one request handler for all API methods. Lookup services return `null` only for HTTP 404 and propagate other errors.
+- Backend controllers handle HTTP and database operations; `services/taskValidation.js` shares validation between task creation and updates. Course deletion runs in a transaction.
 
 ## Deployment
 
@@ -268,17 +276,18 @@ The workflow in `.github/workflows/deploy.yml` packages the static files from `F
 
 ## Current Limitations
 
-StudyFlow is an academic prototype, not a production authentication system.
+Student Studies is an academic prototype, not a production authentication system.
 
-- Passwords are stored as plain text, and the API does not issue or validate authentication tokens.
-- Profile edits, calendar sessions, task row ordering, and several interface preferences are not synchronized across browsers.
-- The frontend ranking service and the server `/smart` endpoint currently use different scoring weights; the visible UI uses the frontend formula documented above.
-- Automated coverage currently targets frontend modules; the server package declares a test command but contains no server test suite.
+- Passwords are stored as plain text. Password reset still accepts a username without proof of account ownership; these authentication limitations require further work before production use.
+- Google sign-in requires configured Firebase Admin credentials on the backend.
+- Calendar sessions, task row ordering, and several interface preferences are not synchronized across browsers.
+- Browser and server priority calculations use the same weights but still differ in day boundaries and workload warning behavior.
+- Automated checks cover modules and API integration; full browser interaction testing is still needed.
 - Some interface copy still uses the earlier `StudentStudies` name.
 
 ## Future Work
 
-- Hash passwords and add server-validated sessions or token-based authentication.
-- Persist profiles, calendar sessions, and custom task ordering through the API.
+- Hash passwords and verify account ownership during password reset.
+- Persist calendar sessions and custom task ordering through the API.
 - Share one priority implementation between the frontend and backend.
 - Add API integration tests and deployment health checks.

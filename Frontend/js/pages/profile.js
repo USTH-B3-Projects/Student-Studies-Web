@@ -31,9 +31,9 @@ export function initProfile() {
     document.querySelector("#editProfileBtn").hidden = false;
     render();
   };
-  form.onsubmit = (event) => {
+  form.onsubmit = async (event) => {
     event.preventDefault();
-    if (!authService.updateCurrentUser({ studentName: form.elements.studentName.value, email: form.elements.email.value })) return;
+    if (!await authService.updateCurrentUser({ studentName: form.elements.studentName.value, email: form.elements.email.value })) return;
     user = authService.getCurrentUser();
     location.reload();
   };

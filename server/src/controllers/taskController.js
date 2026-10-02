@@ -1,20 +1,9 @@
 const db = require('../config/database');
 const crypto = require('crypto');
+const { validateTask } = require('../services/taskValidation');
 
 function generateId(prefix) {
   return `${prefix}-${crypto.randomUUID()}`;
-}
-
-function isValidDate(value) {
-  return !isNaN(Date.parse(value));
-}
-
-function isValidImportance(value) {
-  return ['very-low', 'low', 'medium', 'high', 'very-high'].includes(value);
-}
-
-function isValidProgress(value) {
-  return [0, 25, 50, 75, 100].includes(value);
 }
 
 function normalizeTask(task) {
@@ -88,26 +77,10 @@ function enrichTask(task) {
 exports.create = (req, res) => {
   const { courseId, taskName, description, deadline, importance, estimatedDuration, currentProgress = 0 } = req.body;
 
-  if (!courseId || !taskName || !deadline) {
-    return res.status(400).json({ error: 'courseId, taskName, and deadline are required' });
-  }
-  if (taskName.trim().length === 0) {
-    return res.status(400).json({ error: 'Task name is NOT empty' });
-  }
-  if (!isValidDate(deadline)) {
-    return res.status(400).json({ error: 'Deadline is invalid' });
-  }
-  if (importance !== undefined && !isValidImportance(importance)) {
-    return res.status(400).json({ error: 'Importance is invalid' });
-  }
-  if (estimatedDuration != null && estimatedDuration <= 0) {
-    return res.status(400).json({ error: 'estimatedDuration must be larger than 0' });
-  }
-  if (currentProgress !== undefined && !isValidProgress(currentProgress)) {
-    return res.status(400).json({ error: 'currentProgress must be: 0, 25, 50, 75, 100' });
-  }
+  const validationError = validateTask(req.body);
+  if (validationError) return res.status(400).json({ error: validationError });
   try {
-    const course = db.prepare('SELECT * FROM courses WHERE courseId = ?').get(courseId);
+    const course = db.prepare('SELECT * FROM courses WHERE courseId = ? AND username = ?').get(courseId, req.student.username);
     if (!course) {
       return res.status(404).json({ error: 'courseId does NOT exist' });
     }
@@ -153,7 +126,8 @@ exports.create = (req, res) => {
 };
 
 exports.getAll = (req, res) => {
-  const { username, courseId } = req.query;
+  const { courseId } = req.query;
+  const { username } = req.student;
 
   try {
     const tasks = db.prepare(`
@@ -183,11 +157,7 @@ exports.getAll = (req, res) => {
 
 exports.getById = (req, res) => {
   const { id } = req.params;
-  const { username } = req.query;
-
-  if (!username) {
-    return res.status(400).json({ error: 'username is required' });
-  }
+  const { username } = req.student;
 
   try {
     const task = db.prepare(`
@@ -223,26 +193,17 @@ exports.update = (req, res) => {
   const { taskName, description, deadline, importance, estimatedDuration, currentProgress } = req.body;
 
   try {
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+    const task = db.prepare(`
+      SELECT t.* FROM tasks t
+      JOIN courses c ON c.courseId = t.courseId
+      WHERE t.id = ? AND c.username = ?
+    `).get(id, req.student.username);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    if (taskName !== undefined && taskName.trim().length === 0) {
-      return res.status(400).json({ error: 'Task name is NOT empty' });
-    }
-    if (deadline !== undefined && !isValidDate(deadline)) {
-      return res.status(400).json({ error: 'Deadline is invalid' });
-    }
-    if (importance !== undefined && !isValidImportance(importance)) {
-      return res.status(400).json({ error: 'Importance is invalid' });
-    }
-    if (estimatedDuration != null && estimatedDuration <= 0) {
-      return res.status(400).json({ error: 'estimatedDuration must be larger than 0' });
-    }
-    if (currentProgress !== undefined && !isValidProgress(currentProgress)) {
-      return res.status(400).json({ error: 'currentProgress must be: 0, 25, 50, 75, 100' });
-    }
+    const validationError = validateTask(req.body, true);
+    if (validationError) return res.status(400).json({ error: validationError });
     const nextProgress = currentProgress !== undefined ? currentProgress : task.currentProgress;
     const completing = task.currentProgress < 100 && nextProgress === 100;
     const reopening = task.currentProgress === 100 && nextProgress < 100;
@@ -273,9 +234,9 @@ exports.update = (req, res) => {
 
 exports.setCompletion = (req, res) => {
   const { id } = req.params;
-  const { username, completed } = req.body;
+  const { completed } = req.body;
+  const { username } = req.student;
 
-  if (!username) return res.status(400).json({ error: 'username is required' });
   if (typeof completed !== 'boolean') return res.status(400).json({ error: 'completed must be a boolean' });
 
   try {
@@ -325,7 +286,11 @@ exports.delete = (req, res) => {
   const { id } = req.params;
 
   try {
-    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+    const task = db.prepare(`
+      SELECT t.* FROM tasks t
+      JOIN courses c ON c.courseId = t.courseId
+      WHERE t.id = ? AND c.username = ?
+    `).get(id, req.student.username);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
@@ -339,11 +304,8 @@ exports.delete = (req, res) => {
 };
 
 exports.smart = (req, res) => {
-  const { username, courseId } = req.query;
-
-  if (!username) {
-    return res.status(400).json({ error: 'username is required' });
-  }
+  const { courseId } = req.query;
+  const { username } = req.student;
 
   try {
     const tasks = db.prepare(`

@@ -6,24 +6,20 @@ function generateId(prefix) {
 }
 
 exports.create = (req, res) => {
-  const { username, courseName, color } = req.body;
+  const { courseName, color } = req.body;
+  const { username } = req.student;
 
-  if (!username || !courseName) {
-    return res.status(400).json({ error: 'username and courseName are required' });
+  if (typeof courseName !== 'string' || !courseName.trim()) {
+    return res.status(400).json({ error: 'courseName is required' });
   }
   if (courseName.trim().length === 0) {
     return res.status(400).json({ error: 'Course name is required' });
   }
-  if (color && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
+  if (color != null && (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color))) {
     return res.status(400).json({ error: 'Invalid course color' });
   }
 
   try {
-    const student = db.prepare('SELECT * FROM students WHERE username = ?').get(username);
-    if (!student) {
-      return res.status(404).json({ error: 'User does not exist' });
-    }
-
     const courseId = generateId('course');
     const id = crypto.randomUUID();
 
@@ -44,7 +40,7 @@ exports.create = (req, res) => {
 };
 
 exports.getAll = (req, res) => {
-  const { username } = req.query;
+  const { username } = req.student;
 
   try {
     const courses = db.prepare(`
@@ -67,8 +63,8 @@ exports.getById = (req, res) => {
     const course = db.prepare(`
       SELECT courseId, username, courseName, color
       FROM courses
-      WHERE courseId = ?
-    `).get(id);
+      WHERE courseId = ? AND username = ?
+    `).get(id, req.student.username);
 
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
@@ -85,15 +81,15 @@ exports.update = (req, res) => {
   const { courseName, color } = req.body;
 
   try {
-    const course = db.prepare('SELECT * FROM courses WHERE courseId = ?').get(id);
+    const course = db.prepare('SELECT * FROM courses WHERE courseId = ? AND username = ?').get(id, req.student.username);
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    if (courseName !== undefined && courseName.trim().length === 0) {
+    if (courseName !== undefined && (typeof courseName !== 'string' || !courseName.trim())) {
       return res.status(400).json({ error: 'Course name is required' });
     }
-    if (color && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
+    if (color != null && (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color))) {
       return res.status(400).json({ error: 'Invalid course color' });
     }
 
@@ -115,13 +111,15 @@ exports.delete = (req, res) => {
   const { id } = req.params;
 
   try {
-    const course = db.prepare('SELECT * FROM courses WHERE courseId = ?').get(id);
+    const course = db.prepare('SELECT * FROM courses WHERE courseId = ? AND username = ?').get(id, req.student.username);
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    db.prepare('DELETE FROM tasks WHERE courseId = ?').run(id);
-    db.prepare('DELETE FROM courses WHERE courseId = ?').run(id);
+    db.transaction(() => {
+      db.prepare('DELETE FROM tasks WHERE courseId = ?').run(id);
+      db.prepare('DELETE FROM courses WHERE courseId = ?').run(id);
+    })();
 
     res.json({ success: true });
   } catch (error) {

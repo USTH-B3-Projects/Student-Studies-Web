@@ -3,8 +3,11 @@ import { initDashboard } from "./pages/dashboard.js";
 import { initCourses } from "./pages/courses.js";
 import { initCourseDetail } from "./pages/course-detail.js";
 import { initAllTasks } from "./pages/tasks.js";
+import { initCalendar } from "./pages/calendar.js";
+import { toast } from "./shared/ui.js";
 import { initProfile } from "./pages/profile.js";
 import { initPageTransitions, initShell } from "./shared/shell.js";
+import { restoreSession } from "./services/authService.js";
 
 initPageTransitions();
 
@@ -14,9 +17,15 @@ const pages = {
   course: initCourses,
   "course-detail": initCourseDetail,
   tasks: initAllTasks,
-  calendar: initShell,
+  calendar: initCalendar,
   profile: initProfile,
   about: initShell,
 };
 
-pages[document.body.dataset.page]?.();
+try {
+  await restoreSession();
+  await pages[document.body.dataset.page]?.();
+} catch (error) {
+  if (document.body.dataset.page === "landing") initAuth();
+  toast(error.message, { actionLabel: "Retry", onAction: () => location.reload(), duration: 60000 });
+}

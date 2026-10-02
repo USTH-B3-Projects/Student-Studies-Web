@@ -1,6 +1,7 @@
 const Database = require('better-sqlite3');
+const path = require('node:path');
 
-const db = new Database(process.env.STUDYFLOW_DB_PATH || './data.db');
+const db = new Database(process.env.STUDYFLOW_DB_PATH || path.join(__dirname, '../../data.db'));
 
 db.pragma('foreign_keys = ON');
 
@@ -10,7 +11,9 @@ db.exec(`
     id TEXT PRIMARY KEY,
     studentName TEXT NOT NULL,
     username TEXT UNIQUE NOT NULL,
-    password TEXT
+    password TEXT,
+    email TEXT,
+    firebaseUid TEXT
   )
 `);
 
@@ -87,10 +90,15 @@ migrateTaskCompletion();
           id TEXT PRIMARY KEY,
           studentName TEXT NOT NULL,
           username TEXT UNIQUE NOT NULL,
-          password TEXT
+          password TEXT,
+          email TEXT,
+          firebaseUid TEXT
         )
       `);
-      db.exec('INSERT INTO students_new SELECT * FROM students');
+      const columns = db.prepare('PRAGMA table_info(students)').all().map((column) => column.name);
+      const email = columns.includes('email') ? 'email' : 'NULL';
+      const firebaseUid = columns.includes('firebaseUid') ? 'firebaseUid' : 'NULL';
+      db.exec(`INSERT INTO students_new (id, studentName, username, password, email, firebaseUid) SELECT id, studentName, username, password, ${email}, ${firebaseUid} FROM students`);
       db.exec('DROP TABLE students');
       db.exec('ALTER TABLE students_new RENAME TO students');
     })();
@@ -98,9 +106,29 @@ migrateTaskCompletion();
   }
 }
 
+const studentColumns = db.prepare('PRAGMA table_info(students)').all().map((column) => column.name);
+if (!studentColumns.includes('email')) {
+  db.exec('ALTER TABLE students ADD COLUMN email TEXT');
+}
+if (!studentColumns.includes('firebaseUid')) {
+  db.exec('ALTER TABLE students ADD COLUMN firebaseUid TEXT');
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS auth_sessions (
+    tokenHash TEXT PRIMARY KEY,
+    studentId TEXT NOT NULL,
+    expiresAt TEXT NOT NULL,
+    FOREIGN KEY (studentId) REFERENCES students(id) ON DELETE CASCADE
+  )
+`);
+
 // Indexes
 db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_course_id ON tasks(courseId)`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline)`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_courses_username ON courses(username)`);
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_students_firebase_uid ON students(firebaseUid)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_auth_sessions_student_id ON auth_sessions(studentId)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expiresAt)`);
 
 module.exports = db;

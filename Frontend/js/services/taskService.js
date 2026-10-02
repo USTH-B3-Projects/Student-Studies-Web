@@ -1,5 +1,4 @@
 import * as apiClient from "./storageService.js";
-import { getCurrentUser } from "./authService.js";
 
 export const TASKS_CHANGED_EVENT = "studyflow:tasks-changed";
 
@@ -16,11 +15,7 @@ function publishTaskChanges(tasks) {
  * @returns {Promise<Object>} Created task
  */
 export async function createTask(taskData) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not logged in");
-
   const task = await apiClient.post("/tasks", {
-    username: user.username,
     courseId: taskData.courseId,
     taskName: taskData.taskName || taskData.name, // Handle both old and new field names
     description: taskData.description || "",
@@ -37,12 +32,7 @@ export async function createTask(taskData) {
  * @returns {Promise<Array>} Array of tasks
  */
 export async function getTasksByUserId() {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not logged in");
-
-  const tasks = await apiClient.get(
-    `/tasks?username=${encodeURIComponent(user.username)}`
-  );
+  const tasks = await apiClient.get("/tasks");
   return Array.isArray(tasks) ? tasks : [];
 }
 
@@ -52,12 +42,7 @@ export async function getTasksByUserId() {
  * @returns {Promise<Array>} Array of tasks
  */
 export async function getTasksByCourseId(courseId) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not logged in");
-
-  const tasks = await apiClient.get(
-    `/tasks?courseId=${encodeURIComponent(courseId)}&username=${encodeURIComponent(user.username)}`
-  );
+  const tasks = await apiClient.get(`/tasks?courseId=${encodeURIComponent(courseId)}`);
   return Array.isArray(tasks) ? tasks : [];
 }
 
@@ -81,15 +66,11 @@ export function getProgress(tasks) {
  * @returns {Promise<Object|null>} Task or null if not found
  */
 export async function getTaskById(taskId) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not logged in");
-
   try {
-    const task = await apiClient.get(
-      `/tasks/${taskId}?username=${encodeURIComponent(user.username)}`
-    );
+    const task = await apiClient.get(`/tasks/${taskId}`);
     return task || null;
-  } catch {
+  } catch (error) {
+    if (error.status !== 404) throw error;
     return null;
   }
 }
@@ -107,10 +88,8 @@ export async function updateTask(taskId, data) {
     mappedData.taskName = mappedData.name;
     delete mappedData.name;
   }
-  if (mappedData.userId && !mappedData.username) {
-    mappedData.username = mappedData.userId;
-    delete mappedData.userId;
-  }
+  delete mappedData.userId;
+  delete mappedData.username;
 
   const task = await apiClient.put(`/tasks/${taskId}`, mappedData);
   return task;
@@ -137,9 +116,7 @@ export async function updateTaskProgress(taskId, currentProgress) {
 }
 
 async function changeTaskCompletion(taskId, completed) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not logged in");
-  return apiClient.patch(`/tasks/${taskId}/completion`, { username: user.username, completed });
+  return apiClient.patch(`/tasks/${taskId}/completion`, { completed });
 }
 
 export async function setTaskCompletion(taskId, completed) {

@@ -1,29 +1,39 @@
 import assert from "node:assert/strict";
 
-const stored = new Map();
 globalThis.window = { location: { hostname: "localhost" } };
-globalThis.localStorage = {
-  getItem: (key) => stored.get(key) ?? null,
-  setItem: (key, value) => stored.set(key, value),
+globalThis.localStorage = new Proxy({}, { get: () => { throw new Error("auth must not use localStorage"); } });
+
+let user = null;
+globalThis.fetch = async (url, options = {}) => {
+  if (url.endsWith("/auth/google")) {
+    assert.deepEqual(JSON.parse(options.body), { idToken: "firebase-token" });
+    user = { id: "student-1", username: "student@example.com", studentName: "Student", email: "student@example.com" };
+    return response({ success: true });
+  }
+  if (url.endsWith("/auth/me") && options.method === "PATCH") {
+    user = { ...user, ...JSON.parse(options.body) };
+    return response({ user });
+  }
+  if (url.endsWith("/auth/me")) return user ? response({ user }) : response({ error: "Authentication required" }, false);
+  throw new Error(`Unexpected request: ${options.method} ${url}`);
 };
-globalThis.fetch = async () => ({
-  ok: true,
-  headers: { get: () => "application/json" },
-  json: async () => ({}),
-});
-const { getCurrentUser, loginWithGoogle, updateCurrentUser } = await import("./authService.js");
 
-await loginWithGoogle({ uid: "uid-1", email: "student@example.com", displayName: "Student" });
+function response(body, ok = true) {
+  return {
+    ok,
+    status: ok ? 200 : 401,
+    statusText: ok ? "OK" : "Unauthorized",
+    headers: { get: () => "application/json" },
+    json: async () => body,
+  };
+}
 
-assert.deepEqual(getCurrentUser(), {
-  username: "student@example.com",
-  studentName: "Student",
-  email: "student@example.com",
-});
+const { getCurrentUser, loginWithGoogle, restoreSession, updateCurrentUser } = await import("./authService.js");
 
-await loginWithGoogle({ uid: "uid-2", email: null, displayName: null });
-assert.deepEqual(getCurrentUser(), { username: "uid-2", studentName: "Student", email: "" });
-
-assert.equal(updateCurrentUser({ studentName: "  New Name  ", email: " user@example.com " }), true);
-assert.deepEqual(getCurrentUser(), { username: "uid-2", studentName: "New Name", email: "user@example.com" });
-assert.equal(updateCurrentUser({ studentName: " " }), false);
+assert.equal(await restoreSession(), null);
+await loginWithGoogle({ getIdToken: async () => "firebase-token" });
+assert.deepEqual(getCurrentUser(), user);
+assert.equal(await updateCurrentUser({ studentName: "  New Name  ", email: " new@example.com " }), true);
+assert.equal(getCurrentUser().studentName, "New Name");
+assert.equal(getCurrentUser().email, "new@example.com");
+assert.equal(await updateCurrentUser({ studentName: " " }), false);

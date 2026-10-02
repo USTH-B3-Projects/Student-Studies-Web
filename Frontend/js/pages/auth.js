@@ -49,7 +49,7 @@ function wireAuth() {
       let result = form.id === "loginForm"
         ? await authService.login(d.username, d.password)
         : form.id === "registerForm"
-          ? await authService.register(d.studentName, d.username, d.password, d.confirmPassword)
+          ? await authService.register(d.studentName, d.username, d.password, d.confirmPassword, d.email)
           : await authService.resetPassword(d.username, d.newPassword, d.confirmPassword);
       if (result.success && form.id === "forgotForm") {
         form.reset();

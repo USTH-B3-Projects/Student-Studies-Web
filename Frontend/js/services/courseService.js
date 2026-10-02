@@ -1,5 +1,4 @@
 import * as apiClient from "./storageService.js";
-import { getCurrentUser } from "./authService.js";
 
 /**
  * Create a new course.
@@ -7,11 +6,7 @@ import { getCurrentUser } from "./authService.js";
  * @returns {Promise<Object>} Created course
  */
 export async function createCourse(courseData) {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not logged in");
-
   const course = await apiClient.post("/courses", {
-    username: user.username,
     courseName: courseData.courseName,
     color: courseData.color || null,
   });
@@ -23,10 +18,7 @@ export async function createCourse(courseData) {
  * @returns {Promise<Array>} Array of courses
  */
 export async function getCoursesByUserId() {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not logged in");
-
-  const courses = await apiClient.get(`/courses?username=${encodeURIComponent(user.username)}`);
+  const courses = await apiClient.get("/courses");
   return Array.isArray(courses) ? courses : [];
 }
 
@@ -39,7 +31,8 @@ export async function getCourseById(courseId) {
   try {
     const course = await apiClient.get(`/courses/${courseId}`);
     return course || null;
-  } catch {
+  } catch (error) {
+    if (error.status !== 404) throw error;
     return null;
   }
 }
