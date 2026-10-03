@@ -1,112 +1,247 @@
-# StudyFlow
+<table width="100%">
+  <tr>
+    <td align="center" bgcolor="#0D1117">
+      <br>
+      <img src="./Frontend/source/logo.png" alt="StudentStudies" width="200">
+      <h1><font color="#FFFFFF"></font></h1>
+      <p><strong><font color="#A5B4FC">SMART STUDY PLANNER</font></strong></p>
+      <hr>
+      <p><font color="#D1D5DB">A web-based study planner that helps students organize courses, manage tasks and deadlines, schedule study sessions, track progress, and know what to work on next.</font></p>
+      <p>
+        <img src="https://img.shields.io/badge/JavaScript-ES%20Modules-F7DF1E?style=flat-square&logo=javascript&logoColor=111827" alt="JavaScript ES Modules">
+        <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 18+">
+        <img src="https://img.shields.io/badge/Express-5.2.1-7C3AED?style=flat-square&logo=express&logoColor=white" alt="Express 5.2.1">
+        <img src="https://img.shields.io/badge/SQLite-better--sqlite3-2563EB?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite with better-sqlite3">
+        <img src="https://img.shields.io/badge/Firebase_Auth-12.19.0-FFCA28?style=flat-square&logo=firebase&logoColor=111827" alt="Firebase Auth 12.19.0">
+        <img src="https://img.shields.io/badge/tests-9%20passed-22C55E?style=flat-square" alt="tests 9 passed">
+      </p>
+      <br>
+    </td>
+  </tr>
+</table>
 
-A student study planner built with vanilla HTML/CSS/JavaScript, Express, SQLite and Firebase Authentication for Google sign-in.
+# StudentStudies
 
-## Run locally
+StudentStudies is a study planner for organizing courses, tasks, deadlines, and study progress. It combines a static browser frontend with a REST API backed by SQLite.
 
-Use Node.js 22 or newer. Install backend dependencies and start the API:
+## Features
 
-```sh
-npm ci --prefix BE
-npm start
-```
+- Register and log in with a username and password, or sign in with Google.
+- Create, edit, and remove courses and tasks.
+- Set task importance, deadlines, estimated duration, and progress.
+- Browse tasks by course, status, deadline, or priority; search, filter, sort, and perform bulk actions.
+- View tasks in a calendar with day, week, and month views.
+- See dashboard summaries, upcoming deadlines, workload warnings, and recommended next tasks.
+- Use light and dark themes.
 
-Serve the frontend on an allowed development origin. For example, with Python installed:
+Task priority and remaining workload are calculated from deadline, importance, progress, and estimated duration. When no duration is provided, the priority service uses a two-hour default.
 
-```sh
-python -m http.server 5501 --bind 127.0.0.1 --directory FE
-```
+## Tech stack
 
-Open **http://127.0.0.1:5501/pages/index.html**. VS Code Live Server on port 5500 or 5501 also works. `npm run dev` starts the backend with nodemon.
+- **Frontend:** HTML, CSS, JavaScript ES modules; no frontend build step.
+- **Backend:** Node.js, Express 5, and the `better-sqlite3` SQLite driver.
+- **Authentication:** Backend username/password accounts and Firebase Authentication for Google sign-in.
+- **Hosting:** GitHub Pages for the static frontend; Render for the API.
 
-The API defaults to port 5000. `PORT` overrides it; `STUDYFLOW_DB_PATH` overrides the database location, otherwise `BE/data.db` is used independently of the working directory. Production Google sign-in needs Firebase Admin credentials. `NODE_ENV=production` enables Secure/SameSite=None session cookies. Backend `.env` loading retains the existing process-working-directory behavior.
-
-`FE/config.js` selects the local API for localhost/127.0.0.1 and the existing hosted API elsewhere. No frontend build or npm install is required: Firebase browser modules load directly from gstatic.
-
-## Structure and responsibilities
-
-```text
-FE/
-  app.js                  Restore session, dispatch page initialization
-  config.js, firebase.js  API location and browser Firebase setup
-  pages/                  HTML entry points and page interaction/rendering
-  components/             Task UI, modals, picker, shell, notifications, UI helpers
-  services/               HTTP client, auth, courses, tasks, smart rules, calendar storage
-  utils/calendar-time.js  Reusable calendar date/time calculations
-  css/                    Existing styles and theme cascade
-  assets/                 Images
-BE/
-  server.js, app.js       Start Express; middleware, API mounts, JSON errors
-  routes/                 Parse HTTP input, call services, respond
-  services/               Auth/course/task operations, validation and SQL
-  models/database.js      SQLite schema, connection and legacy migrations
-  middleware/             Authenticated cookie sessions
-  tests/                  API, migration and backend smart-rule checks
-  package.json            Backend dependencies and scripts
-  package-lock.json       Reproducible backend dependency versions
-  data.db                 Existing application database
-```
-
-Root `package.json` provides start/dev/test commands and the frontend ES-module scope. `docs/` retains historical requirements, diagrams and refactor reports; `.github/` holds deployment configuration. Tests for frontend modules live beside those modules.
-
-Frontend services do not render DOM. `services/apiClient.js` owns fetch/error handling. `services/taskService.js` owns task API operations and completion events. Page modules coordinate rendering; shared row rendering/expansion/drag handling lives in `components/task-ui.js`.
-
-Backend services are plain functions operating on values, without request/response objects. Routes retain HTTP status/response handling. Database migrations and legacy Firebase linking are intentionally preserved for existing data.
-
-## Behavior and data
-
-- Accounts, courses, tasks and cookie sessions persist in SQLite.
-- Calendar sessions remain per-user browser-local data. Theme, notification read state and course view preferences retain their original storage keys.
-- Task fields, API response aliases, validation, progress values, completion/reopening history and authentication contracts remain unchanged.
-- Task-row order is session-local. Dragging changes visible row order; on a course page, Recommended next updates immediately to the first incomplete task in the manual order. Filtering retains the page's ordering; choosing a new sort resets it. No order API or persistent storage was added.
-- Calendar drag/drop continues to schedule and move study sessions independently of task-row ordering.
-
-The current runtime priority formula is:
+## Application Workflow
 
 ```text
-priority = 0.6 * urgency + 0.25 * importance + 0.15 * workload
+Register or sign in
+        ↓
+Create and organize courses
+        ↓
+Add tasks with deadlines, importance, duration, and progress
+        ↓
+Review priority rankings, recommendations, and warnings
+        ↓
+Drag tasks into day, week, or month study plans
+        ↓
+Update progress or mark tasks complete
+        ↓
+Monitor dashboard summaries and upcoming work
 ```
 
-The browser smart rules live in `FE/services/smartService.js`. Existing API rules live in `BE/services/taskService.js`. They deliberately remain separate: browser urgency uses local calendar days and excludes overdue workload warnings, while API urgency uses elapsed 24-hour periods and includes overdue warnings when an estimate exists. API tie-breaking and browser rounding also differ. Unifying these behaviors was explicitly deferred during the refactor. Historical documents describe different weights and fields; they are not a reason to silently change running behavior.
+## Project structure
 
-## API
+StudentStudies has a browser-based frontend in `FE/` and a Node.js API in `BE/`, uses a layered, multi-page frontend and a small REST backend. Page modules coordinate the UI, reusable components render shared interactions, service modules handle data access and calculations, Express controllers implement API behavior, and SQLite provides server-side persistence.
 
-All endpoints are under `/api/v1`:
-
-| Methods | Path | Responsibility |
-|---|---|---|
-| GET | `/health` | Availability |
-| POST | `/auth/register`, `/auth/login`, `/auth/reset`, `/auth/google`, `/auth/logout` | Authentication |
-| GET, PATCH | `/auth/me` | Current student/profile |
-| GET, POST | `/courses`, `/tasks` | List/create |
-| GET, PUT, DELETE | `/courses/:id`, `/tasks/:id` | Read/update/delete |
-| PATCH | `/tasks/:id/completion` | Complete/reopen |
-| GET | `/smart` | Existing server recommendations |
-
-## Validation
-
-```sh
-npm test
-npm test --prefix BE
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+├── BE/
+│   ├── middleware/
+│   │   └── authenticate.js
+│   ├── models/
+│   │   └── database.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── courseRoutes.js
+│   │   ├── smartRoutes.js
+│   │   └── taskRoutes.js
+│   ├── services/
+│   │   ├── authService.js
+│   │   ├── courseService.js
+│   │   └── taskService.js
+│   ├── tests/
+│   │   ├── auth.test.js
+│   │   ├── database.test.js
+│   │   └── smart.test.js
+│   ├── .gitignore
+│   ├── app.js
+│   ├── firebaseAdmin.js
+│   ├── package.json
+│   ├── package-lock.json
+│   └── server.js
+├── docs/
+│   ├── CONTEXT.md
+│   ├── data-contract.md
+│   ├── module-interface.md
+│   ├── refactor-audit.md
+│   ├── refactor-report.md
+│   ├── studyflow-brief.md
+│   ├── ClassDiagram.drawio.png
+│   ├── UseCaseDiagram.png
+│   └── WorkFlow.drawio.png
+├── FE/
+│   ├── assets/
+│   │   ├── background/
+│   │   │   ├── dashboard_dark.png
+│   │   │   ├── dashboard_light.png
+│   │   │   └── login.png
+│   │   ├── google.png
+│   │   ├── hide.png
+│   │   └── logo.png
+│   ├── components/
+│   │   ├── modal.js
+│   │   ├── notifications.js
+│   │   ├── schedule-picker.js
+│   │   ├── shell.js
+│   │   ├── task-ui.js
+│   │   └── ui.js
+│   ├── css/
+│   │   ├── ui/
+│   │   │   └── light_dark.css
+│   │   ├── auth.css
+│   │   ├── calendar.css
+│   │   ├── course.css
+│   │   ├── dashboard.css
+│   │   ├── global.css
+│   │   └── info-pages.css
+│   ├── pages/
+│   │   ├── ui/
+│   │   │   └── light_dark.html
+│   │   ├── about.html
+│   │   ├── auth.js
+│   │   ├── calendar.html
+│   │   ├── calendar.js
+│   │   ├── course-detail.html
+│   │   ├── course-detail.js
+│   │   ├── course.html
+│   │   ├── courses.js
+│   │   ├── dashboard.html
+│   │   ├── dashboard.js
+│   │   ├── index.html
+│   │   ├── profile.html
+│   │   ├── profile.js
+│   │   ├── tasks.html
+│   │   └── tasks.js
+│   ├── services/
+│   │   ├── apiClient.js
+│   │   ├── authService.js
+│   │   ├── calendarService.js
+│   │   ├── courseService.js
+│   │   ├── smartService.js
+│   │   └── taskService.js
+│   ├── utils/
+│   │   └── calendar-time.js
+│   ├── app.js
+│   ├── config.js
+│   └── firebase.js
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
-Tests use temporary or in-memory databases, never the existing `BE/data.db`. They cover startup ordering, API error handling, session/profile flows, ownership, CRUD, completion history, migrations, calendar calculations/persistence, preserved smart rules and drag-handler/manual-order behavior.
+### Request and data flow
 
-See [the pre-change audit](docs/refactor-audit.md) and [the refactor report](docs/refactor-report.md) for the full file inventory, migration map, differential checks and remaining limits.
+```text
+HTML page → page controller → frontend service → REST API → Express controller → SQLite
+                              ↘ smart calculations and browser-local calendar/preferences
+```
+
+## Use the web application
+
+1. Open the deployed GitHub Pages site, or run the local setup below.
+2. Register an account or choose **Log in with Google**. The API must be available for account and course/task data.
+3. Add courses, then create tasks with deadlines and importance. Estimated duration is optional.
+4. Update task progress as you work. Use Courses, Tasks, and Calendar to review and organize your work.
+5. Check the Dashboard for workload warnings, upcoming deadlines, and recommended tasks.
+
+## Environment setup
+
+### Requirements
+
+- Node.js 18 or newer and npm.
+- A modern browser. Serve the frontend over HTTP; browser ES modules and Firebase sign-in do not work reliably from `file://` URLs.
+- A static development server, such as the VS Code Live Server extension configured for port `5501`
+
+### Installation
+
+```bash
+git clone https://github.com/USTH-B3-Projects/Student-Studies-Web.git
+cd Student-Studies-Web
+npm install
+```
+
+No environment variable is required for the default local setup. The API listens on port `5000`; optionally set `PORT` or `STUDYFLOW_DB_PATH` before starting it.
+
+### Start the API locally
+
+Run
+```powershell
+cd BE
+npm run dev
+```
+
+The API listens on `http://localhost:5000` by default. Confirm it is running at `http://localhost:5000/api/v1/health`. The server creates `server/data.db` automatically when started and open:
+
+```text
+http://localhost:5501/html/index.html
+```
+
+To store the SQLite database elsewhere, set `STUDYFLOW_DB_PATH` before starting the server. For example, in PowerShell:
+
+```powershell
+$env:STUDYFLOW_DB_PATH = "D:\data\studentstudies.db"
+npm run dev
+```
+
+### Serve the frontend locally
+
+From the repository root, start a static server with VS Code Live Server or another static file server, using `Frontend/html` as its document root. With VS Code Live Server, open `Frontend/html/index.html` and select **Open with Live Server**. The app configuration uses `http://localhost:5000/api/v1` on `localhost` and `127.0.0.1`.
+
+Google sign-in uses the Firebase project configured in `Frontend/js/firebase.js`. If you use a different Firebase project, configure its web app and authorized domains there and enable Google as a sign-in provider. The backend CORS allowlist currently includes the project's GitHub Pages origin and localhost ports 5500 and 5501.
 
 ## Deployment
 
-`.github/workflows/deploy.yml` packages FE pages at the site root, preserving deployed URLs such as `/index.html` and `/course-detail.html`, and rewrites relative assets accordingly. Backend hosting configured with the old `server` root directory must be changed to `BE`; start with `npm start` there. Remote host settings were not changed by this local refactor.
+- **Frontend:** Push to the `main` branch to trigger `.github/workflows/deploy.yml`. GitHub Actions copies the static assets from `Frontend/` into a Pages artifact, adjusts relative paths, and publishes the site to GitHub Pages. The workflow can also be run manually from the Actions tab. Enable GitHub Pages with **GitHub Actions** as the build and deployment source.
+- **API:** The frontend uses `https://study-flow-4wcc.onrender.com/api/v1` outside localhost. The Express API is deployed on Render; configure its start command as `npm start` with `server/` as the service root (or `node src/server.js` from that directory). Set `PORT` through Render. For persistent production data, configure `STUDYFLOW_DB_PATH` to a path on a persistent disk mounted by the Render service.
 
-## Remaining issues preserved for separate approval
+## Project documents
 
-- Password-reset HTML lacks the confirmation field required by its page handler/API.
-- Notifications omit task identifiers/types expected by the notification UI.
-- Three referenced illustrations are missing from the repository.
-- Calendar sessions are not removed from localStorage when their task/course is deleted.
-- API smart tie-breaks compare Date objects by identity; this existing behavior is retained.
-- Prototype password storage/reset verification and other authentication semantics are unchanged.
-- Uncertain CSS, the standalone theme fragment, and behaviorally different modal/date pickers need review before removal or consolidation.
-- Real browser interactions, layout equivalence and live Google sign-in still need manual verification; no browser was available to the refactor session.
+- [Project brief](docs/studyflow-brief.md)
+- [Data contract](docs/data-contract.md)
+- [Module interface](docs/module-interface.md)
+- [Context](docs/CONTEXT.md)
+- [Workflow diagram](docs/WorkFlow.drawio.png)
+- [Use case diagram](docs/UseCaseDiagram.png)
+- [Class diagram](docs/ClassDiagram.drawio.png)
 
-Historical references: [data contract](docs/data-contract.md), [module interfaces](docs/module-interface.md), [product brief](docs/studyflow-brief.md), [domain context](docs/CONTEXT.md).
+## Future Work
+
+- Hash passwords and add server-validated sessions or token-based authentication.
+- Persist profiles, calendar sessions, and custom task ordering through the API.
+- Share one priority implementation between the frontend and backend.
+- Add API integration tests and deployment health checks.
