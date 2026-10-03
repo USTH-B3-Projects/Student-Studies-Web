@@ -13,9 +13,21 @@ export async function restoreSession() {
   return currentUser;
 }
 
-export async function register(studentName, username, password, confirmPassword, email = "") {
+export async function register(
+  studentName,
+  username,
+  password,
+  confirmPassword,
+  email = "",
+) {
   try {
-    await apiClient.post("/auth/register", { studentName, username, password, confirmPassword, email });
+    await apiClient.post("/auth/register", {
+      studentName,
+      username,
+      password,
+      confirmPassword,
+      email,
+    });
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -23,10 +35,15 @@ export async function register(studentName, username, password, confirmPassword,
 }
 
 export async function login(username, password) {
-  if (currentUser) return { success: false, error: "Log out before signing in with another account." };
+  if (currentUser)
+    return {
+      success: false,
+      error: "Log out before signing in with another account.",
+    };
   try {
     await apiClient.post("/auth/login", { username, password });
-    if (!await restoreSession()) throw new Error("Unable to establish the authenticated session.");
+    if (!(await restoreSession()))
+      throw new Error("Unable to establish the authenticated session.");
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -37,13 +54,18 @@ export async function loginWithGoogle(user) {
   const idToken = await user.getIdToken();
   await apiClient.post("/auth/google", { idToken });
   const applicationUser = await restoreSession();
-  if (!applicationUser) throw new Error("Unable to establish the authenticated session.");
+  if (!applicationUser)
+    throw new Error("Unable to establish the authenticated session.");
   return applicationUser;
 }
 
 export async function resetPassword(username, newPassword, confirmPassword) {
   try {
-    await apiClient.post("/auth/reset", { username, newPassword, confirmPassword });
+    await apiClient.post("/auth/reset", {
+      username,
+      newPassword,
+      confirmPassword,
+    });
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -57,7 +79,10 @@ export function getCurrentUser() {
 export async function updateCurrentUser({ studentName, email }) {
   const name = studentName?.trim();
   if (!currentUser || !name) return false;
-  const result = await apiClient.patch("/auth/me", { studentName: name, email: email?.trim() || "" });
+  const result = await apiClient.patch("/auth/me", {
+    studentName: name,
+    email: email?.trim() || "",
+  });
   currentUser = result.user;
   return true;
 }

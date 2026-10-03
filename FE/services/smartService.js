@@ -12,14 +12,20 @@ export function calculateUrgencyScore(deadline) {
   }
 
   // Compare by DAY (ignoring hours/minutes/seconds) to determine "how many days remain."
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
   const startOfDeadlineDay = new Date(
     deadlineDate.getFullYear(),
     deadlineDate.getMonth(),
-    deadlineDate.getDate()
+    deadlineDate.getDate(),
   );
 
-  const daysRemaining = Math.round((startOfDeadlineDay - startOfToday) / ONE_DAY_MS);
+  const daysRemaining = Math.round(
+    (startOfDeadlineDay - startOfToday) / ONE_DAY_MS,
+  );
 
   if (daysRemaining <= 0) {
     return 90;
@@ -80,7 +86,7 @@ export function calculatePriorityScore(task) {
 
   const remainingWorkload = calculateRemainingWorkload(
     task.estimatedDuration,
-    task.currentProgress
+    task.currentProgress,
   );
   const workloadScore = calculateWorkloadScore(remainingWorkload);
 
@@ -93,10 +99,15 @@ export function calculatePriorityScore(task) {
 export function enrich(task) {
   const urgencyScore = calculateUrgencyScore(task.deadline);
   const importanceScore = calculateImportanceScore(task.importance);
-  const remainingWorkload = calculateRemainingWorkload(task.estimatedDuration, task.currentProgress);
+  const remainingWorkload = calculateRemainingWorkload(
+    task.estimatedDuration,
+    task.currentProgress,
+  );
   const workloadScore = calculateWorkloadScore(remainingWorkload);
-  const completionStatus = Number(task.currentProgress) === 100 ? "completed" : "pending";
-  const isOverdue = completionStatus !== "completed" && new Date(task.deadline) < new Date();
+  const completionStatus =
+    Number(task.currentProgress) === 100 ? "completed" : "pending";
+  const isOverdue =
+    completionStatus !== "completed" && new Date(task.deadline) < new Date();
   const hasWorkloadWarning =
     completionStatus !== "completed" &&
     !isOverdue &&
@@ -117,13 +128,20 @@ export function enrich(task) {
     priorityScore: calculatePriorityScore(task),
     completionStatus,
     isOverdue,
-    displayStatus: completionStatus === "completed" ? "completed" : isOverdue ? "overdue" : "pending",
+    displayStatus:
+      completionStatus === "completed"
+        ? "completed"
+        : isOverdue
+          ? "overdue"
+          : "pending",
     hasWorkloadWarning,
   };
 }
 
 export function rankTasks(tasks) {
-  const pendingTasks = tasks.map(enrich).filter((task) => task.currentProgress < 100);
+  const pendingTasks = tasks
+    .map(enrich)
+    .filter((task) => task.currentProgress < 100);
 
   return pendingTasks.sort((taskA, taskB) => {
     const priorityA = calculatePriorityScore(taskA);
@@ -158,19 +176,39 @@ export function rankTasks(tasks) {
 export function getUserNotifications(tasks) {
   return tasks.map(enrich).flatMap((task) => {
     const name = task.taskName || task.name;
-    if (task.isOverdue) return [{ title: "🚨 Overdue Task", message: `"${name}" is past its deadline. Please complete it ASAP!` }];
+    if (task.isOverdue)
+      return [
+        {
+          title: "🚨 Overdue Task",
+          message: `"${name}" is past its deadline. Please complete it ASAP!`,
+        },
+      ];
     if (!task.hasWorkloadWarning) return [];
-    const days = Math.round((new Date(task.deadline).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
-    const due = days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
-    return [{ title: "⚠️ Workload Warning", message: `${name} still requires approximately ${task.remainingWorkload.toFixed(1)} hours of work and is due ${due}.` }];
+    const days = Math.round(
+      (new Date(task.deadline).setHours(0, 0, 0, 0) -
+        new Date().setHours(0, 0, 0, 0)) /
+        86400000,
+    );
+    const due =
+      days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
+    return [
+      {
+        title: "⚠️ Workload Warning",
+        message: `${name} still requires approximately ${task.remainingWorkload.toFixed(1)} hours of work and is due ${due}.`,
+      },
+    ];
   });
 }
 
 // Reorder only the supplied IDs; filtered-out and newly added tasks keep their slots.
 export function applyManualOrder(tasks, orderedIds) {
   const byId = new Map(tasks.map((task) => [task.taskId, task]));
-  const ordered = [...new Set(orderedIds)].map((id) => byId.get(id)).filter(Boolean);
+  const ordered = [...new Set(orderedIds)]
+    .map((id) => byId.get(id))
+    .filter(Boolean);
   const selected = new Set(ordered.map((task) => task.taskId));
   let index = 0;
-  return tasks.map((task) => selected.has(task.taskId) ? ordered[index++] : task);
+  return tasks.map((task) =>
+    selected.has(task.taskId) ? ordered[index++] : task,
+  );
 }

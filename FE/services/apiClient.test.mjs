@@ -12,9 +12,12 @@ globalThis.fetch = async (url, options) => {
   assert.equal(options.credentials, "include");
   if (options.body) assert.deepEqual(JSON.parse(options.body), { value: 1 });
   return {
-    ok: status < 400, status, statusText: "Server error",
+    ok: status < 400,
+    status,
+    statusText: "Server error",
     headers: { get: () => contentType },
-    json: async () => status >= 400 ? { error: "Request failed" } : { value: 1 },
+    json: async () =>
+      status >= 400 ? { error: "Request failed" } : { value: 1 },
   };
 };
 for (const method of ["get", "post", "put", "patch", "del"]) {
@@ -28,7 +31,11 @@ status = 404;
 assert.equal(await courses.getCourseById("missing"), null);
 assert.equal(await tasks.getTaskById("missing"), null);
 status = 500;
-for (const lookup of [() => courses.getCourseById("id"), () => tasks.getTaskById("id"), auth.restoreSession]) {
+for (const lookup of [
+  () => courses.getCourseById("id"),
+  () => tasks.getTaskById("id"),
+  auth.restoreSession,
+]) {
   await assert.rejects(lookup, { status: 500, message: "Request failed" });
 }
 status = 401;

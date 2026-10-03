@@ -7,10 +7,15 @@ async function request(method, endpoint, data) {
     headers: { "Content-Type": "application/json" },
     ...(data === undefined ? {} : { body: JSON.stringify(data) }),
   });
-  const body = response.headers.get("content-type")?.includes("application/json")
-    ? await response.json() : null;
+  const body = response.headers
+    .get("content-type")
+    ?.includes("application/json")
+    ? await response.json()
+    : null;
   if (!response.ok) {
-    const error = new Error(body?.error || body?.message || response.statusText || "API error");
+    const error = new Error(
+      body?.error || body?.message || response.statusText || "API error",
+    );
     error.status = response.status;
     throw error;
   }

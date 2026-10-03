@@ -20,8 +20,17 @@ function save(schedules) {
 }
 
 function validate(taskId, startTime, endTime) {
-  const start = new Date(startTime).getTime(), end = new Date(endTime).getTime();
-  if (typeof taskId !== 'string' || !taskId.trim() || !startTime || !endTime || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+  const start = new Date(startTime).getTime(),
+    end = new Date(endTime).getTime();
+  if (
+    typeof taskId !== "string" ||
+    !taskId.trim() ||
+    !startTime ||
+    !endTime ||
+    !Number.isFinite(start) ||
+    !Number.isFinite(end) ||
+    end <= start
+  ) {
     throw new Error("Schedule must have a task and a valid time range");
   }
 }
@@ -49,13 +58,25 @@ export function getScheduleSegment(schedule, day) {
   dayEnd.setDate(dayEnd.getDate() + 1);
   const start = new Date(Math.max(new Date(schedule.startTime), dayStart));
   const end = new Date(Math.min(new Date(schedule.endTime), dayEnd));
-  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start >= end) return null;
-  return { start, end, topMinutes: (start - dayStart) / 60000, durationMinutes: (end - start) / 60000 };
+  if (
+    !Number.isFinite(start.getTime()) ||
+    !Number.isFinite(end.getTime()) ||
+    start >= end
+  )
+    return null;
+  return {
+    start,
+    end,
+    topMinutes: (start - dayStart) / 60000,
+    durationMinutes: (end - start) / 60000,
+  };
 }
 
 export function updateSchedule(sessionId, changes) {
   const schedules = getSchedules();
-  const index = schedules.findIndex((schedule) => schedule.sessionId === sessionId);
+  const index = schedules.findIndex(
+    (schedule) => schedule.sessionId === sessionId,
+  );
   if (index < 0) throw new Error("Calendar session not found");
   const updated = { ...schedules[index], ...changes, sessionId };
   validate(updated.taskId, updated.startTime, updated.endTime);

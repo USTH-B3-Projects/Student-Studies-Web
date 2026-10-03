@@ -3,10 +3,16 @@ import * as apiClient from "./apiClient.js";
 export const TASKS_CHANGED_EVENT = "studyflow:tasks-changed";
 
 function publishTaskChanges(tasks) {
-  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function") return;
-  window.dispatchEvent(new CustomEvent(TASKS_CHANGED_EVENT, {
-    detail: { tasks, changedIds: tasks.map((task) => task.taskId) },
-  }));
+  if (
+    typeof window === "undefined" ||
+    typeof window.dispatchEvent !== "function"
+  )
+    return;
+  window.dispatchEvent(
+    new CustomEvent(TASKS_CHANGED_EVENT, {
+      detail: { tasks, changedIds: tasks.map((task) => task.taskId) },
+    }),
+  );
 }
 
 /**
@@ -42,7 +48,9 @@ export async function getTasksByUserId() {
  * @returns {Promise<Array>} Array of tasks
  */
 export async function getTasksByCourseId(courseId) {
-  const tasks = await apiClient.get(`/tasks?courseId=${encodeURIComponent(courseId)}`);
+  const tasks = await apiClient.get(
+    `/tasks?courseId=${encodeURIComponent(courseId)}`,
+  );
   return Array.isArray(tasks) ? tasks : [];
 }
 
@@ -54,8 +62,10 @@ export async function getTasksByCourseId(courseId) {
 export function getProgress(tasks) {
   return tasks.length
     ? Math.round(
-        tasks.reduce((sum, task) => sum + Number(task.currentProgress || 0), 0) /
-          tasks.length
+        tasks.reduce(
+          (sum, task) => sum + Number(task.currentProgress || 0),
+          0,
+        ) / tasks.length,
       )
     : 0;
 }
@@ -115,8 +125,11 @@ export async function setTaskCompletion(taskId, completed) {
 }
 
 export async function setTaskCompletions(taskIds, completed) {
-  const results = await Promise.allSettled(taskIds.map((taskId) => changeTaskCompletion(taskId, completed)));
-  const successful = [], failed = [];
+  const results = await Promise.allSettled(
+    taskIds.map((taskId) => changeTaskCompletion(taskId, completed)),
+  );
+  const successful = [],
+    failed = [];
   results.forEach((result, index) => {
     if (result.status === "fulfilled") successful.push(result.value);
     else failed.push({ taskId: taskIds[index], error: result.reason });

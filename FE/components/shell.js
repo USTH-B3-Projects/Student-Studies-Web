@@ -3,8 +3,11 @@ import * as taskService from "../services/taskService.js";
 import { $, toast, initials } from "./ui.js";
 import { initNotifications, notificationReadState } from "./notifications.js";
 
-const prefersReducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-const hasNativePageTransitions = () => /^https?:$/.test(location.protocol) && CSS.supports("selector(:active-view-transition)");
+const prefersReducedMotion = () =>
+  matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hasNativePageTransitions = () =>
+  /^https?:$/.test(location.protocol) &&
+  CSS.supports("selector(:active-view-transition)");
 
 function setProfileMenuOpen(button, dropdown, open) {
   button.setAttribute("aria-expanded", String(open));
@@ -12,9 +15,13 @@ function setProfileMenuOpen(button, dropdown, open) {
 }
 
 function initProfileMenu(user) {
-  const oldAvatar = $("#userAvatar"), oldName = $("#userName"), oldLogout = $("#logoutBtn");
+  const oldAvatar = $("#userAvatar"),
+    oldName = $("#userName"),
+    oldLogout = $("#logoutBtn");
   if (!oldAvatar || !oldName || !oldLogout) return;
-  oldAvatar.insertAdjacentHTML("beforebegin", `
+  oldAvatar.insertAdjacentHTML(
+    "beforebegin",
+    `
     <div class="user-menu">
       <button id="userMenuButton" class="user-menu-button" type="button" aria-haspopup="menu" aria-controls="userMenuDropdown" aria-expanded="false">
         <span id="userAvatar" class="profile-avatar" aria-hidden="true"></span>
@@ -34,7 +41,8 @@ function initProfileMenu(user) {
           <button id="logoutBtn" type="button" role="menuitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/></svg>Log out</button>
         </div>
       </div>
-    </div>`);
+    </div>`,
+  );
   oldAvatar.remove();
   oldName.remove();
   oldLogout.remove();
@@ -47,10 +55,15 @@ function initProfileMenu(user) {
   $("#dropdownUserAvatar").textContent = avatarText;
   $("#dropdownUsername").textContent = `@${user.username}`;
 
-  const wrapper = $(".user-menu"), button = $("#userMenuButton"), dropdown = $("#userMenuDropdown");
-  button.addEventListener("click", () => setProfileMenuOpen(button, dropdown, dropdown.hidden));
+  const wrapper = $(".user-menu"),
+    button = $("#userMenuButton"),
+    dropdown = $("#userMenuDropdown");
+  button.addEventListener("click", () =>
+    setProfileMenuOpen(button, dropdown, dropdown.hidden),
+  );
   document.addEventListener("click", (event) => {
-    if (!wrapper.contains(event.target)) setProfileMenuOpen(button, dropdown, false);
+    if (!wrapper.contains(event.target))
+      setProfileMenuOpen(button, dropdown, false);
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !dropdown.hidden) {
@@ -70,8 +83,16 @@ function initProfileMenu(user) {
 
 function navigate(url, { replace = false } = {}) {
   const destination = new URL(url, location.href);
-  const go = () => replace ? location.replace(destination.href) : location.assign(destination.href);
-  if (prefersReducedMotion() || hasNativePageTransitions() || destination.href === location.href) return go();
+  const go = () =>
+    replace
+      ? location.replace(destination.href)
+      : location.assign(destination.href);
+  if (
+    prefersReducedMotion() ||
+    hasNativePageTransitions() ||
+    destination.href === location.href
+  )
+    return go();
   document.body.classList.add("page-leaving");
   setTimeout(go, 200);
 }
@@ -85,15 +106,27 @@ function initShell() {
   if (document.body.dataset.page === "dashboard") {
     if (!history.state?.studyflowAuthRoot) {
       history.replaceState({ studyflowAuthRoot: true }, "", location.href);
-      history.pushState({ studyflowAuthRoot: true, guard: true }, "", location.href);
+      history.pushState(
+        { studyflowAuthRoot: true, guard: true },
+        "",
+        location.href,
+      );
     }
     addEventListener("popstate", (event) => {
       if (event.state?.studyflowAuthRoot && !event.state.guard) {
-        history.pushState({ studyflowAuthRoot: true, guard: true }, "", location.href);
+        history.pushState(
+          { studyflowAuthRoot: true, guard: true },
+          "",
+          location.href,
+        );
       }
     });
   }
-  if (!$("#notiBellBtn")) $(".user-actions .ui-switch")?.insertAdjacentHTML("afterend", '<div class="notification-wrapper"><button id="notiBellBtn" class="icon-btn" type="button" aria-label="Notifications">&#128276;<span id="notiBadge" class="noti-badge" hidden>0</span></button><div id="notiDropdown" class="noti-dropdown" hidden><div class="noti-header">Notifications</div><ul id="notiList" class="noti-list"></ul></div></div>');
+  if (!$("#notiBellBtn"))
+    $(".user-actions .ui-switch")?.insertAdjacentHTML(
+      "afterend",
+      '<div class="notification-wrapper"><button id="notiBellBtn" class="icon-btn" type="button" aria-label="Notifications">&#128276;<span id="notiBadge" class="noti-badge" hidden>0</span></button><div id="notiDropdown" class="noti-dropdown" hidden><div class="noti-header">Notifications</div><ul id="notiList" class="noti-list"></ul></div></div>',
+    );
   const themeToggle = $("#themeToggle");
   const syncThemeToggle = () => {
     const dark = document.documentElement.dataset.theme === "dark";
@@ -104,32 +137,57 @@ function initShell() {
     themeToggle.closest("label")?.setAttribute("title", themeToggle.title);
   };
   syncThemeToggle();
-  if (themeToggle) themeToggle.onchange = () => {
-    const theme = themeToggle.checked ? "dark" : "light";
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("studyflow_theme", theme);
-    syncThemeToggle();
-  };
+  if (themeToggle)
+    themeToggle.onchange = () => {
+      const theme = themeToggle.checked ? "dark" : "light";
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem("studyflow_theme", theme);
+      syncThemeToggle();
+    };
   initProfileMenu(u);
   addEventListener("pageshow", () => {
-    if (!authService.getCurrentUser()) navigate("index.html#authCard", { replace: true });
+    if (!authService.getCurrentUser())
+      navigate("index.html#authCard", { replace: true });
   });
   initNotifications(navigate).catch((error) => toast(error.message));
-  addEventListener(taskService.TASKS_CHANGED_EVENT, () => initNotifications(navigate).catch((error) => toast(error.message)));
+  addEventListener(taskService.TASKS_CHANGED_EVENT, () =>
+    initNotifications(navigate).catch((error) => toast(error.message)),
+  );
   return u;
 }
 
 function initPageTransitions() {
   if (prefersReducedMotion()) return;
-  const isPageLink = (link) => link.origin === location.origin && /\/(dashboard|course|course-detail|tasks|calendar|profile|about)\.html$/.test(link.pathname);
-  if (!hasNativePageTransitions()) document.documentElement.classList.add("fallback-page-transition");
-  document.addEventListener("pointerenter", (event) => {
-    const link = event.target.closest?.("a[href]");
-    if (link && isPageLink(link)) fetch(link.href, { priority: "low" }).catch(() => {});
-  }, true);
+  const isPageLink = (link) =>
+    link.origin === location.origin &&
+    /\/(dashboard|course|course-detail|tasks|calendar|profile|about)\.html$/.test(
+      link.pathname,
+    );
+  if (!hasNativePageTransitions())
+    document.documentElement.classList.add("fallback-page-transition");
+  document.addEventListener(
+    "pointerenter",
+    (event) => {
+      const link = event.target.closest?.("a[href]");
+      if (link && isPageLink(link))
+        fetch(link.href, { priority: "low" }).catch(() => {});
+    },
+    true,
+  );
   document.addEventListener("click", (event) => {
     const link = event.target.closest?.("a[href]");
-    if (!link || !isPageLink(link) || link.target || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (
+      !link ||
+      !isPageLink(link) ||
+      link.target ||
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
     const destination = new URL(link.href);
     if (destination.href === location.href) return;
     const courseId = destination.searchParams.get("courseId");
@@ -141,7 +199,15 @@ function initPageTransitions() {
     event.preventDefault();
     navigate(destination.href);
   });
-  addEventListener("pageshow", () => document.body.classList.remove("page-leaving"));
+  addEventListener("pageshow", () =>
+    document.body.classList.remove("page-leaving"),
+  );
 }
 
-export { initShell, initPageTransitions, navigate, notificationReadState, setProfileMenuOpen };
+export {
+  initShell,
+  initPageTransitions,
+  navigate,
+  notificationReadState,
+  setProfileMenuOpen,
+};

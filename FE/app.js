@@ -27,5 +27,9 @@ try {
   await pages[document.body.dataset.page]?.();
 } catch (error) {
   if (document.body.dataset.page === "landing") initAuth();
-  toast(error.message, { actionLabel: "Retry", onAction: () => location.reload(), duration: 60000 });
+  toast(error.message, {
+    actionLabel: "Retry",
+    onAction: () => location.reload(),
+    duration: 60000,
+  });
 }

@@ -1,4 +1,10 @@
-const initials = (name) => name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase();
+const initials = (name) =>
+  name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -35,7 +41,11 @@ const dueLabel = (d) => {
     now = new Date(),
     ms = deadline - now,
     days =
-      (Date.UTC(deadline.getFullYear(), deadline.getMonth(), deadline.getDate()) -
+      (Date.UTC(
+        deadline.getFullYear(),
+        deadline.getMonth(),
+        deadline.getDate(),
+      ) -
         Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) /
       86400000;
   if (ms < 0) return "Overdue";
@@ -43,7 +53,10 @@ const dueLabel = (d) => {
   if (days === 1) return "Due tomorrow";
   return `Due in ${days} days`;
 };
-const toast = (msg, { actionLabel, onAction, duration = actionLabel ? 6000 : 2600 } = {}) => {
+const toast = (
+  msg,
+  { actionLabel, onAction, duration = actionLabel ? 6000 : 2600 } = {},
+) => {
   const e = document.createElement("div");
   e.className = "toast";
   const text = document.createElement("span");
@@ -56,8 +69,12 @@ const toast = (msg, { actionLabel, onAction, duration = actionLabel ? 6000 : 260
     action.onclick = async () => {
       clearTimeout(timer);
       action.disabled = true;
-      try { await onAction(); e.remove(); }
-      catch { action.disabled = false; }
+      try {
+        await onAction();
+        e.remove();
+      } catch {
+        action.disabled = false;
+      }
     };
     e.append(action);
   }
@@ -72,7 +89,12 @@ const elementFromHTML = (html) => {
   return template.content.firstElementChild;
 };
 
-const reconcileTaskRows = (container, tasks, renderRow, changedIds = new Set()) => {
+const reconcileTaskRows = (
+  container,
+  tasks,
+  renderRow,
+  changedIds = new Set(),
+) => {
   const wanted = new Set(tasks.map((task) => task.taskId));
   [...container.querySelectorAll(":scope > [data-task-id]")].forEach((row) => {
     if (!wanted.has(row.dataset.taskId)) row.remove();
@@ -82,13 +104,26 @@ const reconcileTaskRows = (container, tasks, renderRow, changedIds = new Set()) 
     let row = rows.find((item) => item.dataset.taskId === task.taskId);
     if (!row || changedIds.has(task.taskId)) {
       const rendered = renderRow(task);
-      const replacement = typeof rendered === "string" ? elementFromHTML(rendered) : rendered;
+      const replacement =
+        typeof rendered === "string" ? elementFromHTML(rendered) : rendered;
       row?.replaceWith(replacement);
       row = replacement;
     }
-    const current = [...container.querySelectorAll(":scope > [data-task-id]")][index];
+    const current = [...container.querySelectorAll(":scope > [data-task-id]")][
+      index
+    ];
     if (current !== row) container.insertBefore(row, current || null);
   });
 };
 
-export { initials, $, esc, fmtDate, fmtDateTime, localDateTimeValue, dueLabel, toast, reconcileTaskRows };
+export {
+  initials,
+  $,
+  esc,
+  fmtDate,
+  fmtDateTime,
+  localDateTimeValue,
+  dueLabel,
+  toast,
+  reconcileTaskRows,
+};

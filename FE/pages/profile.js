@@ -2,7 +2,6 @@ import { initials } from "../components/ui.js";
 import * as authService from "../services/authService.js";
 import { initShell } from "../components/shell.js";
 
-
 export function initProfile() {
   let user = initShell();
   if (!user) return;
@@ -11,10 +10,12 @@ export function initProfile() {
     const name = user.studentName || user.username;
     document.querySelector("#profileAvatar").textContent = initials(name);
     document.querySelector("#profileName").textContent = name;
-    document.querySelector("#profileUsername").textContent = `@${user.username}`;
+    document.querySelector("#profileUsername").textContent =
+      `@${user.username}`;
     document.querySelector("#profileNameCopy").textContent = name;
     document.querySelector("#profileUsernameCopy").textContent = user.username;
-    document.querySelector("#profileEmail").textContent = user.email || "Not provided";
+    document.querySelector("#profileEmail").textContent =
+      user.email || "Not provided";
     form.elements.studentName.value = name;
     form.elements.username.value = user.username;
     form.elements.email.value = user.email || "";
@@ -33,7 +34,13 @@ export function initProfile() {
   };
   form.onsubmit = async (event) => {
     event.preventDefault();
-    if (!await authService.updateCurrentUser({ studentName: form.elements.studentName.value, email: form.elements.email.value })) return;
+    if (
+      !(await authService.updateCurrentUser({
+        studentName: form.elements.studentName.value,
+        email: form.elements.email.value,
+      }))
+    )
+      return;
     user = authService.getCurrentUser();
     location.reload();
   };

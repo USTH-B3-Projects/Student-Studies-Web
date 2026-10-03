@@ -1,9 +1,11 @@
-const Database = require('better-sqlite3');
-const path = require('node:path');
+const Database = require("better-sqlite3");
+const path = require("node:path");
 
-const db = new Database(process.env.STUDYFLOW_DB_PATH || path.join(__dirname, '../data.db'));
+const db = new Database(
+  process.env.STUDYFLOW_DB_PATH || path.join(__dirname, "../data.db"),
+);
 
-db.pragma('foreign_keys = ON');
+db.pragma("foreign_keys = ON");
 
 // Students table
 db.exec(`
@@ -48,16 +50,22 @@ db.exec(`
 `);
 
 const migrateTaskCompletion = db.transaction(() => {
-  let columns = db.prepare('PRAGMA table_info(tasks)').all().map((column) => column.name);
-  if (!columns.includes('progressBeforeCompletion')) {
-    db.exec('ALTER TABLE tasks ADD COLUMN progressBeforeCompletion INTEGER');
+  let columns = db
+    .prepare("PRAGMA table_info(tasks)")
+    .all()
+    .map((column) => column.name);
+  if (!columns.includes("progressBeforeCompletion")) {
+    db.exec("ALTER TABLE tasks ADD COLUMN progressBeforeCompletion INTEGER");
   }
-  if (!columns.includes('completedAt')) {
-    db.exec('ALTER TABLE tasks ADD COLUMN completedAt TEXT');
+  if (!columns.includes("completedAt")) {
+    db.exec("ALTER TABLE tasks ADD COLUMN completedAt TEXT");
   }
 
-  columns = db.prepare('PRAGMA table_info(tasks)').all().map((column) => column.name);
-  if (columns.includes('completed')) {
+  columns = db
+    .prepare("PRAGMA table_info(tasks)")
+    .all()
+    .map((column) => column.name);
+  if (columns.includes("completed")) {
     db.exec(`
       UPDATE tasks
       SET progressBeforeCompletion = currentProgress,
@@ -70,7 +78,7 @@ const migrateTaskCompletion = db.transaction(() => {
       SET completedAt = COALESCE(completedAt, createdAt)
       WHERE currentProgress = 100
     `);
-    db.exec('ALTER TABLE tasks DROP COLUMN completed');
+    db.exec("ALTER TABLE tasks DROP COLUMN completed");
   }
 });
 
@@ -80,10 +88,12 @@ migrateTaskCompletion();
 // PRAGMA foreign_keys cannot be toggled inside a transaction, so we
 // temporarily disable it around the table-rebuild migration.
 {
-  const passwordCol = db.prepare('PRAGMA table_info(students)').all()
-    .find((col) => col.name === 'password');
+  const passwordCol = db
+    .prepare("PRAGMA table_info(students)")
+    .all()
+    .find((col) => col.name === "password");
   if (passwordCol && passwordCol.notnull === 1) {
-    db.pragma('foreign_keys = OFF');
+    db.pragma("foreign_keys = OFF");
     db.transaction(() => {
       db.exec(`
         CREATE TABLE students_new (
@@ -95,23 +105,33 @@ migrateTaskCompletion();
           firebaseUid TEXT
         )
       `);
-      const columns = db.prepare('PRAGMA table_info(students)').all().map((column) => column.name);
-      const email = columns.includes('email') ? 'email' : 'NULL';
-      const firebaseUid = columns.includes('firebaseUid') ? 'firebaseUid' : 'NULL';
-      db.exec(`INSERT INTO students_new (id, studentName, username, password, email, firebaseUid) SELECT id, studentName, username, password, ${email}, ${firebaseUid} FROM students`);
-      db.exec('DROP TABLE students');
-      db.exec('ALTER TABLE students_new RENAME TO students');
+      const columns = db
+        .prepare("PRAGMA table_info(students)")
+        .all()
+        .map((column) => column.name);
+      const email = columns.includes("email") ? "email" : "NULL";
+      const firebaseUid = columns.includes("firebaseUid")
+        ? "firebaseUid"
+        : "NULL";
+      db.exec(
+        `INSERT INTO students_new (id, studentName, username, password, email, firebaseUid) SELECT id, studentName, username, password, ${email}, ${firebaseUid} FROM students`,
+      );
+      db.exec("DROP TABLE students");
+      db.exec("ALTER TABLE students_new RENAME TO students");
     })();
-    db.pragma('foreign_keys = ON');
+    db.pragma("foreign_keys = ON");
   }
 }
 
-const studentColumns = db.prepare('PRAGMA table_info(students)').all().map((column) => column.name);
-if (!studentColumns.includes('email')) {
-  db.exec('ALTER TABLE students ADD COLUMN email TEXT');
+const studentColumns = db
+  .prepare("PRAGMA table_info(students)")
+  .all()
+  .map((column) => column.name);
+if (!studentColumns.includes("email")) {
+  db.exec("ALTER TABLE students ADD COLUMN email TEXT");
 }
-if (!studentColumns.includes('firebaseUid')) {
-  db.exec('ALTER TABLE students ADD COLUMN firebaseUid TEXT');
+if (!studentColumns.includes("firebaseUid")) {
+  db.exec("ALTER TABLE students ADD COLUMN firebaseUid TEXT");
 }
 
 db.exec(`
@@ -127,8 +147,14 @@ db.exec(`
 db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_course_id ON tasks(courseId)`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline)`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_courses_username ON courses(username)`);
-db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_students_firebase_uid ON students(firebaseUid)`);
-db.exec(`CREATE INDEX IF NOT EXISTS idx_auth_sessions_student_id ON auth_sessions(studentId)`);
-db.exec(`CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expiresAt)`);
+db.exec(
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_students_firebase_uid ON students(firebaseUid)`,
+);
+db.exec(
+  `CREATE INDEX IF NOT EXISTS idx_auth_sessions_student_id ON auth_sessions(studentId)`,
+);
+db.exec(
+  `CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expiresAt)`,
+);
 
 module.exports = db;

@@ -8,7 +8,10 @@ export function enhanceScheduleDateTime(input, label) {
   picker.className = "deadline-picker has-value";
   picker.tabIndex = 0;
   picker.setAttribute("role", "button");
-  picker.setAttribute("aria-label", `Select ${label.toLowerCase()} date and time`);
+  picker.setAttribute(
+    "aria-label",
+    `Select ${label.toLowerCase()} date and time`,
+  );
   picker.innerHTML = `<span class="deadline-picker-calendar" aria-hidden="true">&#128197;</span><span class="deadline-picker-display"></span><span class="deadline-picker-chevron" aria-hidden="true">&rsaquo;</span>`;
   datePanel.className = "deadline-date-picker";
   datePanel.hidden = true;
@@ -48,7 +51,10 @@ export function enhanceScheduleDateTime(input, label) {
     const year = visibleMonth.getFullYear();
     const month = visibleMonth.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
-    monthLabel.textContent = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(visibleMonth);
+    monthLabel.textContent = new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      year: "numeric",
+    }).format(visibleMonth);
     grid.innerHTML = Array.from({ length: 42 }, (_, index) => {
       const date = new Date(year, month, index - firstDay + 1);
       const value = dateKey(date);
@@ -56,7 +62,9 @@ export function enhanceScheduleDateTime(input, label) {
     }).join("");
   };
   const openDate = () => {
-    root.querySelectorAll(".deadline-date-picker, .deadline-time-picker").forEach((panel) => (panel.hidden = true));
+    root
+      .querySelectorAll(".deadline-date-picker, .deadline-time-picker")
+      .forEach((panel) => (panel.hidden = true));
     selectedDate = input.value.slice(0, 10);
     const selected = new Date(`${selectedDate}T00:00:00`);
     visibleMonth = new Date(selected.getFullYear(), selected.getMonth(), 1);
@@ -74,13 +82,24 @@ export function enhanceScheduleDateTime(input, label) {
     hour.focus();
   };
   picker.onclick = openDate;
-  picker.onkeydown = (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); openDate(); } };
+  picker.onkeydown = (event) => {
+    if (["Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      openDate();
+    }
+  };
   datePanel.onclick = (event) => {
-    if (event.target.closest("[data-picker-prev]")) visibleMonth.setMonth(visibleMonth.getMonth() - 1);
-    else if (event.target.closest("[data-picker-next]")) visibleMonth.setMonth(visibleMonth.getMonth() + 1);
-    else if (event.target.closest("[data-picker-date]")) selectedDate = event.target.closest("[data-picker-date]").dataset.pickerDate;
-    else if (event.target.closest("[data-picker-continue]")) { datePanel.hidden = true; return openTime(); }
-    else return;
+    if (event.target.closest("[data-picker-prev]"))
+      visibleMonth.setMonth(visibleMonth.getMonth() - 1);
+    else if (event.target.closest("[data-picker-next]"))
+      visibleMonth.setMonth(visibleMonth.getMonth() + 1);
+    else if (event.target.closest("[data-picker-date]"))
+      selectedDate =
+        event.target.closest("[data-picker-date]").dataset.pickerDate;
+    else if (event.target.closest("[data-picker-continue]")) {
+      datePanel.hidden = true;
+      return openTime();
+    } else return;
     renderDates();
   };
   timePanel.querySelector("[data-picker-done]").onclick = () => {
@@ -93,4 +112,3 @@ export function enhanceScheduleDateTime(input, label) {
   };
   updateDisplay();
 }
-
