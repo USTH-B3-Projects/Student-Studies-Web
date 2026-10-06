@@ -456,7 +456,14 @@ All endpoints are under `/api/v1`. Protected endpoints use the `studyflow_sessio
 
 ## Team
 
-This repository is maintained by the USTH B3 project team. See the [GitHub contributors page](https://github.com/USTH-B3-Projects/Student-Studies-Web/graphs/contributors) for the contributor history; individual roles are not recorded in the repository.
+| No. | Full name | Student ID |
+| ---: | --- | ---: |
+| 1 | Nguyễn Minh Nhật | 2410757 |
+| 2 | Hoàng Thu An | 2410002 |
+| 3 | Hoàng Ngân Anh | 2410030 |
+| 4 | Trần Mai Anh | 2410093 |
+| 5 | Vũ Đức Quang | 2410831 |
+| 6 | Đoàn Quốc Việt | 2411057 |
 
 ## Project Documents
 
