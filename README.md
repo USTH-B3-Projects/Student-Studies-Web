@@ -1,14 +1,37 @@
-<p align="center">
-  <img src="FE/assets/logo.png" alt="StudyFlow / Student Studies" width="420">
-</p>
+<div align="center">
+  <img src="FE/assets/logo.png" alt="StudyFlow logo" width="520">
 
-# StudyFlow
+  <h1>StudyFlow</h1>
 
-StudyFlow is a study planner for students who need more than a list of deadlines. It combines course and task management with deterministic priority scoring, course-level next-task recommendations, workload warnings, progress tracking, and a drag-and-drop study calendar. The result is a single workflow for deciding what to study next, scheduling the work, and tracking it to completion.
+  <p><strong>Know what to study next—and turn priorities into a study plan.</strong></p>
 
-**[Open the live demo](https://usth-b3-projects.github.io/Student-Studies-Web/)** · **[View the repository](https://github.com/USTH-B3-Projects/Student-Studies-Web)**
+  <p>
+    A rule-based study planner that brings course management, task prioritization,<br>
+    workload awareness, progress tracking, and calendar scheduling into one workflow.
+  </p>
 
-> The interface is currently branded **Student Studies** in some assets. The project and its planning workflow are documented here as **StudyFlow**.
+  <p>
+    <img src="https://img.shields.io/badge/HTML5-markup-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5">
+    <img src="https://img.shields.io/badge/CSS3-responsive-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3">
+    <img src="https://img.shields.io/badge/JavaScript-ES_modules-F7DF1E?style=flat-square&logo=javascript&logoColor=111827" alt="JavaScript ES modules">
+    <img src="https://img.shields.io/badge/Node.js-runtime-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js">
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/Express-5.2.1-000000?style=flat-square&logo=express&logoColor=white" alt="Express 5.2.1">
+    <img src="https://img.shields.io/badge/SQLite-better--sqlite3_12.4.1-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite with better-sqlite3 12.4.1">
+    <img src="https://img.shields.io/badge/Firebase_Auth-12.19.0-FFCA28?style=flat-square&logo=firebase&logoColor=111827" alt="Firebase Authentication 12.19.0">
+    <img src="https://img.shields.io/badge/API-REST%20%2F%20JSON-2563EB?style=flat-square" alt="REST JSON API">
+    <img src="https://img.shields.io/badge/Deploy-GitHub_Pages-222222?style=flat-square&logo=githubpages&logoColor=white" alt="Deployed with GitHub Pages">
+  </p>
+
+  <p>
+    <strong><a href="https://usth-b3-projects.github.io/Student-Studies-Web/">Live Demo</a></strong>
+    · <a href="#project-documents">Documentation</a>
+    · <a href="docs/refactor-report.md">Refactor Report</a>
+  </p>
+</div>
+
+---
 
 ## Why StudyFlow?
 
@@ -478,7 +501,3 @@ All endpoints are under `/api/v1`. Protected endpoints use the `studyflow_sessio
 - [Refactor report](docs/refactor-report.md)
 
 These documents provide useful project history, but some predate the current implementation. When they conflict with source code, the source code is authoritative.
-
-## License
-
-No license file is currently included. Unless the maintainers add one, normal copyright restrictions apply.
