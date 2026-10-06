@@ -3,7 +3,6 @@
   "type": "module",
   "scripts": {
     "start": "npm start --prefix BE",
-    "dev": "npm run dev --prefix BE",
-    "test": "node --test"
+    "dev": "npm run dev --prefix BE"
   }
 }

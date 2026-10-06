@@ -28,7 +28,7 @@ let courses = [];
 let weekStart = mondayOf(new Date());
 let selectedDate = new Date();
 let view = "week";
-let filter = "all";
+let filter = "unscheduled";
 let query = "";
 let dragged = null;
 

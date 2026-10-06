@@ -2537,7 +2537,7 @@ body[data-page="dashboard"] {
   place-items: center;
   border-radius: 50%;
   background: conic-gradient(
-    var(--primary) calc(var(--progress) * 1%),
+    var(--red) calc(var(--progress) * 1%),
     var(--bg-secondary) 0
   );
 }
