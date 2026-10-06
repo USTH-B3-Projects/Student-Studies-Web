@@ -1,7 +1,5 @@
 <div align="center">
-  <img src="FE/assets/logo.png" alt="StudyFlow logo" width="520">
-
-  <h1>StudyFlow</h1>
+  <img src="FE/assets/logo.png" alt="Student Studies logo" width="520">
 
   <p><strong>Know what to study next—and turn priorities into a study plan.</strong></p>
 
@@ -33,9 +31,9 @@
 
 ---
 
-## Why StudyFlow?
+## Why Student Studies?
 
-Traditional task managers mainly answer: **“What tasks do I have?”** StudyFlow also helps answer: **“Which task should I focus on next?”**
+Traditional task managers mainly answer: **“What tasks do I have?”** Student Studies also helps answer: **“Which task should I focus on next?”**
 
 ```text
 Course management
@@ -325,7 +323,7 @@ SQLite foreign keys and service-level ownership queries keep courses and tasks s
 ## Project Structure
 
 ```text
-StudyFlow/
+Student-Studies-Web/
 ├── .github/workflows/deploy.yml  # GitHub Pages deployment
 ├── BE/
 │   ├── middleware/               # Cookie-session authentication
